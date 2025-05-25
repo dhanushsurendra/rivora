@@ -1,8 +1,9 @@
-import logo from './logo.svg';
-import './App.css';
+import { useState } from 'react'
 import VideoCall from './components/VideoCall'
+import './App.css'
 
 function App() {
+  
   return (
     <>
       <div>
@@ -10,7 +11,7 @@ function App() {
         <VideoCall />
       </div>
     </>
-  );
+  )
 }
 
-export default App;
+export default App
