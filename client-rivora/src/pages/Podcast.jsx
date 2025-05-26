@@ -63,6 +63,7 @@ function Podcast() {
     setOtherUserId(null)
     setRoomFull(false)
     setPermissionDenied(false)
+
     // Reset UI states for buttons as well
     setIsRecording(false)
     setIsAudioMuted(false)
@@ -202,6 +203,7 @@ function Podcast() {
         setStream(currentStream)
         setPermissionDenied(false)
         if (userVideo.current) {
+          console.log('Muted:', userVideo.current.muted)
           userVideo.current.srcObject = currentStream
         }
         console.log(
@@ -381,53 +383,87 @@ function Podcast() {
   }, [stream, createPeer, addPeer, cleanupCall, socket.id, roomFull])
 
   const startRecording = () => {
-    // if (!stream) {
-    //   console.warn('[startRecording] No stream available to record.')
-    //   return
-    // }
+    if (!stream) {
+      console.warn('[startRecording] No stream available to record.')
+      return
+    }
 
-    // recordedRef.current = new MediaRecorder(stream)
-    // recordedRef.current.ondataavailable = (event) => {
-    //   if (event.data.size > 0) {
-    //     recordedChunks.current.push(event.data)
-    //   }
-    //   recordedChunks.current.start()
-    //   setIsRecording(true)
-    // }
+    recordedChunks.current = [] // Initialize/reset before recording
+
+    recordedRef.current = new MediaRecorder(stream)
+
+    recordedRef.current.ondataavailable = (event) => {
+      if (event.data.size > 0) {
+        console.log('Received data chunk')
+        recordedChunks.current.push(event.data)
+      }
+    }
+
+    recordedRef.current.onstart = () => {
+      console.log('Recording started')
+      setIsRecording(true)
+    }
+
+    recordedRef.current.start() // <== start the recorder
   }
 
   const stopRecording = () => {
-    // if (recordedRef.current?.state === 'recording') {
-    //   recordedRef.current.stop()
-    //   setIsRecording(false)
-      
-    //   setTimeout(() => {
-    //     const blob = new Blob(recordedChunks.current, { type: 'video/webm' })
-    //     const url = URL.createObjectURL(blob)
-    //     const a = document.createElement('a')
-    //     a.href = url
-    //     a.download = 'recording.webm'
-    //     recordedChunks.current = [] 
-    //   }, 1000)
-    // }
+    if (recordedRef.current?.state === 'recording') {
+      recordedRef.current.stop()
+      setIsRecording(false)
+
+      setTimeout(() => {
+        const blob = new Blob(recordedChunks.current, { type: 'video/webm' })
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = 'recording.webm'
+        window.open(url)
+        recordedChunks.current = []
+      }, 1000)
+    }
   }
 
   const toggleSlider = () => setShowSlider((prev) => !prev)
 
-  // Placeholder functions for UI buttons (no actual WebRTC logic here)
-  const handleRecordToggle = () => {
-    setIsRecording((prev) => !prev)
-    console.log('Record toggled (UI only):', !isRecording)
-  }
-
   const handleAudioMuteToggle = () => {
-    setIsAudioMuted((prev) => !prev)
-    console.log('Audio mute toggled (UI only):', !isAudioMuted)
+    if (!stream) {
+      console.warn('[handleAudioMuteToggle] No stream available to mute audio.')
+      return
+    }
+
+    const audioTracks = stream.getAudioTracks()
+    if (audioTracks.length === 0) {
+      console.warn('[handleAudioMuteToggle] No audio tracks found.')
+      return
+    }
+
+    // Toggle enabled state
+    const newMutedState = !isAudioMuted
+    audioTracks.forEach((track) => {
+      track.enabled = !newMutedState 
+    })
+    setIsAudioMuted(newMutedState)
   }
 
   const handleVideoMuteToggle = () => {
-    setIsVideoMuted((prev) => !prev)
-    console.log('Video mute toggled (UI only):', !isVideoMuted)
+    if (!stream) {
+      console.warn('[handleVideoMuteToggle] No stream available to mute video.')
+      return
+    }
+
+    const videoTracks = stream.getVideoTracks()
+    if (videoTracks.length === 0) {
+      console.warn('[handleVideoMuteToggle] No video tracks found.')
+      return
+    }
+
+    // Toggle enabled state
+    const newMutedState = !isVideoMuted
+    videoTracks.forEach((track) => {
+      track.enabled = !newMutedState 
+    })
+    setIsVideoMuted(newMutedState)
   }
 
   const handleShareScreenToggle = () => {
@@ -442,11 +478,6 @@ function Podcast() {
 
   const handleInviteClick = () => {
     setShowDialog(true)
-  }
-
-  const handleAudioToggle = () => {
-    setIsChatOpen((prev) => !prev)
-    console.log('Chat toggled (UI only):', !isChatOpen)
   }
 
   const handleEndCall = () => {
@@ -492,7 +523,6 @@ function Podcast() {
               toggleSlider={toggleSlider}
               handleAudioMuteToggle={handleAudioMuteToggle}
               handleVideoMuteToggle={handleVideoMuteToggle}
-              handleRecordToggle={handleRecordToggle}
               handleShareScreenToggle={handleShareScreenToggle}
               handleEndCall={handleEndCall}
               handleChatToggle={handleChatToggle}

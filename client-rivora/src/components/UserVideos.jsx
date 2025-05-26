@@ -28,7 +28,7 @@ const UserVideos = ({
                 autoPlay
                 muted
                 playsInline
-                className='w-full h-full object-cover'
+                className='w-full h-full object-cover rotate-y-180'
               />
             ) : (
               <div className='text-gray-400 text-2xl'>
@@ -47,7 +47,7 @@ const UserVideos = ({
                 ref={peerVideo}
                 autoPlay
                 playsInline
-                className='w-full h-full object-cover'
+                className='w-full h-full object-cover rotate-y-180'
               />
             ) : (
               <div className='w-full max-w-xl text-center space-y-4 text-white'>
