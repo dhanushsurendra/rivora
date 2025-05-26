@@ -39,7 +39,6 @@ function Podcast() {
   const [isAudioMuted, setIsAudioMuted] = useState(false)
   const [isVideoMuted, setIsVideoMuted] = useState(false)
   const [isShareScreenActive, setIsShareScreenActive] = useState(false) // Placeholder
-  const [isChatOpen, setIsChatOpen] = useState(false) // Placeholder
   const [showSlider, setShowSlider] = useState(false)
   const [volume, setVolume] = useState(50)
 
@@ -163,6 +162,13 @@ function Podcast() {
         console.log('[addPeer] Received remote stream (receiver side).')
         if (peerVideo.current) {
           peerVideo.current.srcObject = remoteStream
+
+          // Ensure the video element is ready before playing and set the volume
+          peerVideo.current.onloadedmetadata = () => {
+            peerVideo.current.volume = volume / 100
+            peerVideo.current.play()
+            console.log('[Metadata] Volume set and playback started')
+          }
         }
       })
 
@@ -382,6 +388,13 @@ function Podcast() {
     }
   }, [stream, createPeer, addPeer, cleanupCall, socket.id, roomFull])
 
+  useEffect(() => {
+    if (peerVideo.current) {
+      peerVideo.current.volume = volume / 100
+    }
+    console.log(`[Volume Test] Volume set to ${volume / 100}`)
+  }, [volume])
+
   const startRecording = () => {
     if (!stream) {
       console.warn('[startRecording] No stream available to record.')
@@ -471,11 +484,6 @@ function Podcast() {
     console.log('Share screen toggled (UI only):', !isShareScreenActive)
   }
 
-  const handleChatToggle = () => {
-    setIsChatOpen((prev) => !prev)
-    console.log('Chat toggled (UI only):', !isChatOpen)
-  }
-
   const handleInviteClick = () => {
     setShowDialog(true)
   }
@@ -525,7 +533,6 @@ function Podcast() {
               handleVideoMuteToggle={handleVideoMuteToggle}
               handleShareScreenToggle={handleShareScreenToggle}
               handleEndCall={handleEndCall}
-              handleChatToggle={handleChatToggle}
             />
           </div>
         </div>
