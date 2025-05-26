@@ -1,14 +1,11 @@
-import { useState } from 'react'
-import VideoCall from './components/VideoCall'
 import './App.css'
+import Podcast from './pages/Podcast'
 
 function App() {
-  
   return (
     <>
       <div>
-        <h1>Welcome to Rivora!</h1>
-        <VideoCall />
+        <Podcast />
       </div>
     </>
   )
