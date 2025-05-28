@@ -9,6 +9,7 @@ import CreateSTudioPage from './pages/CreateStudioPage.jsx'
 import StudiosPage from './pages/StudiosPage.jsx'
 
 import './index.css'
+import NotFoundPage from './pages/NotFoundPage.jsx'
 
 const router = createBrowserRouter([
   {path: '/', element: <HomePage />},
@@ -17,6 +18,7 @@ const router = createBrowserRouter([
   {path: '/createStudio', element: <CreateSTudioPage />},
   {path: '/studios', element: <StudiosPage />},
   {path: '/video', element: <Podcast />},
+  {path: '*', element: <NotFoundPage />},
 ])
 
 createRoot(document.getElementById('root')).render(

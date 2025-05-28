@@ -9,6 +9,8 @@ import {
   Check,
 } from 'lucide-react'
 
+import heroImg from '../assets/hero.jpg'
+
 // --- Component: Button ---
 const Button = React.forwardRef(({ className, children, ...props }, ref) => (
   <button
@@ -115,7 +117,7 @@ const HomePage = () => {
         {/* Background image for small screens */}
         <div className='absolute inset-0 md:hidden'>
           <img
-            src='/hero.jpg'
+            src={heroImg}
             alt='Rivora Recording Overview Interface'
             className='w-full h-full object-cover'
           />
@@ -146,7 +148,7 @@ const HomePage = () => {
         <div className='w-0 md:w-1/2 h-full'>
           <div className='absolute inset-0 bg-gradient-to-br from-[#111111] to-[#1A1A1A] opacity-55 z-10'></div>
           <img
-            src='/hero.jpg'
+            src={heroImg}
             alt='Rivora Recording Overview Interface'
             className='w-full h-full object-cover'
           />

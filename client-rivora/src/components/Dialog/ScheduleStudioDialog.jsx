@@ -4,48 +4,21 @@ import Button from '../Button/Button'; // Assuming your Button component exists
 const ScheduleStudioDialog = ({ isOpen = true, onClose, onSubmit }) => {
 
   const [time, setTime] = useState(new Date().toTimeString().slice(0, 5)); 
+  const [date, setDate] = useState(new Date().toISOString().split('T')[0]); 
   const [timezone, setTimezone] = useState(new Date().toString().match(/\(([^)]+)\)/)[1]);
 
-  useEffect(() => {
-    // If you want current date/time when dialog opens, uncomment and adjust:
-    // if (isOpen) {
-    //   setDate(new Date().toISOString().split('T')[0]);
-    //   // Format time to HH:MM for input type="time"
-    //   const now = new Date();
-    //   setTime(now.toTimeString().slice(0, 5));
-    // }
-  }, [isOpen]);
-
   if (!isOpen) {
-    return null; // Don't render anything if the dialog is not open
+    return null; 
   }
-
-  const handleSchedule = (e) => {
-    e.preventDefault(); // Prevent default form submission
-    console.log('Scheduling Studio:', { date, time, timezone });
-    if (onSubmit) {
-      onSubmit({ date, time, timezone });
-    }
-    onClose(); // Close the dialog after submission
-  };
-
-  // Helper function to format time for display (e.g., 20:32 -> 08:32 PM)
-  const formatTimeForDisplay = (timeString) => {
-    if (!timeString) return '';
-    const [hours, minutes] = timeString.split(':').map(Number);
-    const ampm = hours >= 12 ? 'PM' : 'AM';
-    const displayHours = hours % 12 === 0 ? 12 : hours % 12;
-    return `${String(displayHours).padStart(2, '0')}:${String(minutes).padStart(2, '0')} ${ampm}`;
-  };
 
   return (
     <div
       className='fixed inset-0 bg-black/50 flex justify-center items-center z-50 p-4'
-      onClick={onClose} // Close when clicking outside
+      onClick={onClose} 
     >
       <div
         className='bg-[#1A1A1A] rounded-xl shadow-2xl w-full max-w-md p-8 relative'
-        onClick={(e) => e.stopPropagation()} // Prevent clicks inside from closing
+        onClick={(e) => e.stopPropagation()}
       >
         {/* Dialog Header */}
         <div className='flex justify-between items-center pb-4 mb-6'> {/* Added subtle border */}
@@ -61,7 +34,7 @@ const ScheduleStudioDialog = ({ isOpen = true, onClose, onSubmit }) => {
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSchedule}>
+        <form onSubmit={onSubmit}>
           {/* Date Field */}
           <div className='mb-5 relative'>
             <label
@@ -150,6 +123,7 @@ const ScheduleStudioDialog = ({ isOpen = true, onClose, onSubmit }) => {
               text={'Schedule'}
               className="hover:bg-[#6f4ed1]" // Slightly darker purple on hover
               type="submit"
+              onClick={() => onSubmit({ date, time, timezone })}
             />
           </div>
         </form>

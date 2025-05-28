@@ -1,25 +1,9 @@
-import { useState } from 'react'
-
-import { BsPlus } from 'react-icons/bs'
 import Button from '../components/Button/Button'
 import ScheduleStudioDialog from '../components/Dialog/ScheduleStudioDialog'
+import Schedule from '../components/Schedule'
 
 const StudiosPage = () => {
-  const [isDialogOpen, setIsDialogOpen] = useState(false)
-
-  const handleOpenDialog = () => {
-    setIsDialogOpen(true)
-  }
-
-  const handleCloseDialog = () => {
-    setIsDialogOpen(false)
-  }
-
-  const handleScheduleSubmit = (data) => {
-    console.log('Studio Scheduled with data:', data)
-    // Here you would typically send data to your API or update state
-  }
-
+  
   return (
     <div className='bg-[#111111]'>
       <header className='max-w-7xl mx-auto px-4 py-6 flex items-center justify-between'>
@@ -32,21 +16,14 @@ const StudiosPage = () => {
       </header>
       <main className='max-w-7xl mx-auto px-4 py-6 bg-[#111111] min-h-screen text-white'>
         <div className='flex items-center justify-between px-1 mb-4'>
-          <h1 className='text-3xl font-bold'>Studios</h1>
-          <button
-            className='flex items-center gap-2 bg-[#8A65FD] 
-          hover:bg-[#6f4ed1] text-white px-4 py-3 rounded-lg cursor-pointer transition-colors duration-200'
-          >
-            <BsPlus />
-            <span className='text-sm'>Create new</span>
-          </button>
+          <h1 className='text-3xl font-bold'>Create New Studio</h1>
         </div>
 
-        <div className='bg-[#252525] p-2 rounded-lg mb-6 p-6'>
-          <div className='py-6 rounded-lg flex justify-between items-center'>
+        <div className='bg-[#252525] rounded-lg mb-6 p-6'>
+          <div className='pb-6 rounded-lg flex justify-between items-center'>
             <div>
               <h3 className='text-md mb-1 font-medium'>Studio Name</h3>
-              <p className='text-xs text-gray-400'>
+              <p className='text-sm text-gray-400'>
                 You can always change this later.
               </p>
             </div>
@@ -59,13 +36,13 @@ const StudiosPage = () => {
             </div>
           </div>
 
-          <div className='py-6 rounded-lg mb-6 flex justify-between items-center'>
+          <div className='rounded-lg flex justify-between items-center'>
             <div className='space-y-1'>
               <h3 className='text-md font-medium'>Recording Type</h3>
-              <p className='text-xs text-gray-400'>
+              <p className='text-sm text-gray-400'>
                 This will only affect what gets recorded.
               </p>
-              <p className='text-xs text-gray-400'>
+              <p className='text-sm text-gray-400'>
                 You can still see each other during the live call.
               </p>
             </div>
@@ -93,34 +70,26 @@ const StudiosPage = () => {
               </div>
             </div>
           </div>
-          <div className='border-t text-gray-400 mb-4'></div>
-          <Button text={'Create Studio'} className='hover:bg-[#6f4ed1]' />
         </div>
-        <div className='bg-[#252525] space-y-4 px-6 py-6 rounded-lg'>
-          <h3 className='text-md font-medium'>Schedule Studio</h3>
-          <p className='text-xs text-gray-400'>
-            Mark this studio as scheduled to let others know when you will be
-            available.
-          </p>
-          <Button
-            text={'Schedule'}
-            onClick={handleOpenDialog}
-            className='hover:bg-[#6f4ed1]'
-          />
-          <ScheduleStudioDialog
-            isOpen={isDialogOpen}
-            onClose={handleCloseDialog}
-            onSubmit={handleScheduleSubmit}
-          />
-        </div>
+        
+        <Schedule />
 
-        <div className='bg-[#252525] space-y-4 px-6 py-6 rounded-lg'>
+        <div className='bg-[#252525] space-y-4 p-6 rounded-lg my-6'>
           <h3 className='text-md font-medium'>Invite Guest</h3>
           <p className='text-xs text-gray-400'>
             Invite guest to your studio by sending them an email. They will
-            receive a link to join the studio.              
+            receive a link to join the studio.
           </p>
+          <div>
+            <input
+              type='email'
+              className='rounded-lg bg-[#1E1E1E] text-white py-2 px-4 mr-2 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-[#8A65FD] w-72 mb-4'
+              placeholder='Enter guest email...'
+            />
+            <Button text={'Send Invite'} className='hover:bg-[#6f4ed1]' />
+          </div>
         </div>
+        <Button text={'Create Show'} className='hover:bg-[#6f4ed1]' />
       </main>
     </div>
   )
