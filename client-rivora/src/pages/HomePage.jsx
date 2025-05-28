@@ -112,9 +112,18 @@ const HomePage = () => {
 
       {/* Hero Section - Full height with image covering right side */}
       <section className='relative h-screen flex'>
+        {/* Background image for small screens */}
+        <div className='absolute inset-0 md:hidden'>
+          <img
+            src='/hero.jpg'
+            alt='Rivora Recording Overview Interface'
+            className='w-full h-full object-cover'
+          />
+          {/* <div className='absolute inset-0 bg-gradient-to-r from-[#0F0F11]/80 to-transparent'></div> */}
+        </div>
+
         {/* Left Side - Text Content with gradient overlay */}
         <div className='relative z-20 w-full md:w-1/2 flex items-center justify-center px-6 md:px-12'>
-          <div className='absolute inset-0 bg-gradient-to-r from-[#0F0F11] via-[#0F0F11]/90 to-transparent z-10'></div>
           <div className='relative z-20 text-center md:text-left max-w-lg'>
             <h2 className='text-3xl md:text-5xl font-bold text-white leading-tight mb-6'>
               Create Studio-Quality
@@ -134,7 +143,7 @@ const HomePage = () => {
         </div>
 
         {/* Right Side - Full height image */}
-        <div className='w-full md:w-1/2 h-full'>
+        <div className='w-0 md:w-1/2 h-full'>
           <div className='absolute inset-0 bg-gradient-to-br from-[#111111] to-[#1A1A1A] opacity-55 z-10'></div>
           <img
             src='/hero.jpg'

@@ -1,0 +1,161 @@
+import { useState, useEffect } from 'react';
+import Button from '../Button/Button'; // Assuming your Button component exists
+
+const ScheduleStudioDialog = ({ isOpen = true, onClose, onSubmit }) => {
+
+  const [time, setTime] = useState(new Date().toTimeString().slice(0, 5)); 
+  const [timezone, setTimezone] = useState(new Date().toString().match(/\(([^)]+)\)/)[1]);
+
+  useEffect(() => {
+    // If you want current date/time when dialog opens, uncomment and adjust:
+    // if (isOpen) {
+    //   setDate(new Date().toISOString().split('T')[0]);
+    //   // Format time to HH:MM for input type="time"
+    //   const now = new Date();
+    //   setTime(now.toTimeString().slice(0, 5));
+    // }
+  }, [isOpen]);
+
+  if (!isOpen) {
+    return null; // Don't render anything if the dialog is not open
+  }
+
+  const handleSchedule = (e) => {
+    e.preventDefault(); // Prevent default form submission
+    console.log('Scheduling Studio:', { date, time, timezone });
+    if (onSubmit) {
+      onSubmit({ date, time, timezone });
+    }
+    onClose(); // Close the dialog after submission
+  };
+
+  // Helper function to format time for display (e.g., 20:32 -> 08:32 PM)
+  const formatTimeForDisplay = (timeString) => {
+    if (!timeString) return '';
+    const [hours, minutes] = timeString.split(':').map(Number);
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    const displayHours = hours % 12 === 0 ? 12 : hours % 12;
+    return `${String(displayHours).padStart(2, '0')}:${String(minutes).padStart(2, '0')} ${ampm}`;
+  };
+
+  return (
+    <div
+      className='fixed inset-0 bg-black/50 flex justify-center items-center z-50 p-4'
+      onClick={onClose} // Close when clicking outside
+    >
+      <div
+        className='bg-[#1A1A1A] rounded-xl shadow-2xl w-full max-w-md p-8 relative'
+        onClick={(e) => e.stopPropagation()} // Prevent clicks inside from closing
+      >
+        {/* Dialog Header */}
+        <div className='flex justify-between items-center pb-4 mb-6'> {/* Added subtle border */}
+          <h2 className='text-xl font-semibold text-white'>
+            Schedule your studio
+          </h2>
+          <button
+            className='text-gray-400 hover:text-white text-3xl leading-none cursor-pointer'
+            onClick={onClose}
+          >
+            &times;
+          </button>
+        </div>
+
+        {/* Form */}
+        <form onSubmit={handleSchedule}>
+          {/* Date Field */}
+          <div className='mb-5 relative'>
+            <label
+              htmlFor='date'
+              className='block text-white text-sm font-medium mb-2'
+            >
+              Date
+            </label>
+            {/* Input field with desired styling */}
+            <input
+              type='date' // Use type="date" for native date picker
+              id='date'
+              value={date} // Keep as YYYY-MM-DD for input
+              onChange={(e) => setDate(e.target.value)}
+              className='w-full p-3 bg-[#252525] rounded-lg text-white placeholder-gray-500
+                focus:outline-none focus:ring-2 focus:ring-[#8A65FD] focus:border-[#8A65FD] appearance-none
+                [color-scheme:dark]' // Helps with native picker styling in dark mode
+            />
+          </div>
+
+          {/* Time Field */}
+          <div className='mb-5 relative'>
+            <label
+              htmlFor='time'
+              className='block text-white text-sm font-medium mb-2'
+            >
+              Time
+            </label>
+            <input
+              type='time' // Use type="time" for native time picker
+              id='time'
+              value={time} // Keep as HH:MM for input
+              onChange={(e) => setTime(e.target.value)}
+              className='w-full p-3 bg-[#252525] rounded-lg text-white placeholder-gray-500
+                focus:outline-none focus:ring-2 focus:ring-[#8A65FD] focus:border-[#8A65FD] appearance-none
+                [color-scheme:dark]' // Helps with native picker styling in dark mode
+            />
+          </div>
+
+          {/* Timezone Field */}
+          <div className='mb-8 relative'>
+            <label
+              htmlFor='timezone'
+              className='block text-white text-sm font-medium mb-2'
+            >
+              Timezone <span className='text-red-500'>*</span>
+            </label>
+            <select
+              id='timezone'
+              value={timezone}
+              onChange={(e) => setTimezone(e.target.value)}
+              className='w-full p-3 bg-[#252525] rounded-lg text-white placeholder-gray-500
+                focus:outline-none focus:ring-2 focus:ring-[#8A65FD] focus:border-[#8A65FD]
+                appearance-none pr-8 bg-no-repeat bg-[right_0.75rem_center] bg-[length:1.25rem_1.25rem]'
+              style={{
+                // Custom SVG for dropdown arrow. Changed color to match image (lighter gray)
+                backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%239CA3AF'%3e%3cpath d='M7 8l3 3 3-3' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3e%3c/svg%3e")`,
+              }}
+            >
+              {/* Options based on common timezones, you can expand this list */}
+              <option value='(GMT-05:00) Eastern Time'>
+                (GMT-05:00) Eastern Time
+              </option>
+              <option value='(GMT-08:00) Pacific Time'>
+                (GMT-08:00) Pacific Time
+              </option>
+              <option value='(GMT+00:00) UTC'>(GMT+00:00) UTC</option>
+              <option value='(GMT+05:30) Indian Standard Time'>
+                (GMT+05:30) Indian Standard Time
+              </option>
+              {/* Add more timezones as needed */}
+            </select>
+          </div>
+
+          {/* Action Buttons */}
+          <div className='flex justify-end gap-4 pt-6'> {/* Added subtle border */}
+            {/* Cancel Button */}
+            <Button
+              text={'Cancel'}
+              bgColor='bg-[#252525]'
+              className="hover:bg-gray-700" 
+              onClick={onClose}
+            />
+            {/* Schedule Button */}
+            <Button
+              text={'Schedule'}
+              className="hover:bg-[#6f4ed1]" // Slightly darker purple on hover
+              type="submit"
+            />
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+export default ScheduleStudioDialog;
