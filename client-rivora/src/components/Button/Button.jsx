@@ -8,7 +8,7 @@ const Button = ({
   return (
     <button
       onClick={onClick}
-      disabled={isDisabled}
+      // disabled={isDisabled}
       className={`text-sm ${bgColor} cursor-pointer text-white px-4 py-3 rounded-lg transition-colors duration-200 ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''} `}
     >
       {text}

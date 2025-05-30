@@ -11,7 +11,7 @@ const CreateStudioPage = () => {
   })
 
   useEffect(() => {
-    localStorage.setItem('isInviteSent', isInviteSent)
+    localStorage.setItem('isInviteSent', Boolean(isInviteSent))
   }, [isInviteSent])
 
   const isValidEmail = (email) => {
@@ -141,10 +141,9 @@ const CreateStudioPage = () => {
             className='rounded-lg bg-[#1E1E1E] text-white py-2 px-4 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-[#8A65FD] w-full sm:w-72 mr-2'
             placeholder='Enter guest email...'
             value={inviteeEmail}
-            disabled={isInviteSent}
+            // disabled={isInviteSent}
             onChange={(e) => {
               setInviteeEmail(e.target.value)
-              // Re-enable button if user starts typing again after a successful send
               if (isInviteSent && e.target.value.trim() !== '') {
                 setIsInviteSent(false)
               }

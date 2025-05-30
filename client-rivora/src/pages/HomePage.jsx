@@ -91,7 +91,7 @@ const HomePage = () => {
       toast.success('Logout successful!', { theme: 'dark' })
 
       setTimeout(() => {
-        navigate('/login')
+        navigate ('/login')
       }, 500)
     } catch (error) {
       console.error('Logout failed', error)
