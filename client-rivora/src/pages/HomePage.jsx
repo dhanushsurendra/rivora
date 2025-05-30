@@ -91,7 +91,7 @@ const HomePage = () => {
       toast.success('Logout successful!', { theme: 'dark' })
 
       setTimeout(() => {
-        navigate ('/login')
+        navigate('/login')
       }, 500)
     } catch (error) {
       console.error('Logout failed', error)
@@ -102,14 +102,18 @@ const HomePage = () => {
     <div className='flex flex-col min-h-screen text-white bg-[#1A1A1A]'>
       {/* Header - Sticky, with dynamic background on scroll */}
       <header
-        className={`fixed w-full text-white px-6 py-4 top-0 z-50 transition-colors duration-300 ${
+        className={`fixed w-full text-white px-6 py-8 top-0 z-50 transition-colors duration-300 ${
           headerBg ? 'bg-black/10 shadow-lg backdrop-blur-sm' : 'bg-transparent'
         }`}
       >
-        <div className='max-w-7xl mx-auto flex justify-between items-center'>
-          <h1 className='text-xl font-semibold tracking-wide text-[#8A65FD]'>
+        {/* Modified this div's classes */}
+        <div className='max-w-7xl mx-auto flex items-center justify-center relative'>
+          {/* H1 for branding, positioned to the left */}
+          <h1 className='text-xl font-semibold tracking-wide text-[#8A65FD] absolute left-0'>
             Rivora
           </h1>
+
+          {/* Navigation links, now centered */}
           <nav className='hidden md:flex space-x-6 text-gray-300 font-medium'>
             <a
               href='#features'
@@ -130,21 +134,31 @@ const HomePage = () => {
               Pricing
             </a>
           </nav>
-          {isAuthenticated ? (
-            <button
-              onClick={handleLogout}
-              className='bg-[#8A65FD] text-white px-4 py-2 rounded-full text-sm font-medium hover:bg-[#724EE0] transition-colors duration-200 cursor-pointer'
-            >
-              Logout
-            </button>
-          ) : (
+
+          {/* Login/Logout buttons, positioned to the right */}
+          <div className='absolute right-0'>
             <RouterLink
-              to='/login'
-              className='bg-[#8A65FD] text-white px-4 py-2 rounded-full text-sm font-medium hover:bg-[#724EE0] transition-colors duration-200 cursor-pointer'
+              to='/create-studio'
+              className='border-2 border-[#8A65FD] text-[#8A65FD] px-4 py-2 mr-2 rounded-full hover:bg-[#8A65FD] text-sm font-medium hover:text-white transition'
             >
-              Login
+              Create Studio
             </RouterLink>
-          )}
+            {isAuthenticated ? (
+              <button
+                onClick={handleLogout}
+                className='bg-[#8A65FD] text-white px-4 py-2 rounded-full text-sm font-medium hover:bg-[#724EE0] transition-colors duration-200 cursor-pointer'
+              >
+                Logout
+              </button>
+            ) : (
+              <RouterLink
+                to='/login'
+                className='bg-[#8A65FD] text-white px-4 py-2 rounded-full text-sm font-medium hover:bg-[#724EE0] transition-colors duration-200 cursor-pointer'
+              >
+                Login
+              </RouterLink>
+            )}
+          </div>
         </div>
       </header>
 

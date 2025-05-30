@@ -2,11 +2,9 @@ import { useState } from 'react'
 import Button from './Button/Button'
 import ScheduleStudioDialog from './Dialog/ScheduleStudioDialog'
 
-const Schedule = () => {
+const Schedule = ({ canEdit, scheduledDetails, onSubmit }) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [isScheduled, setIsScheduled] = useState(false)
-  // Store the full scheduled details object
-  const [scheduledDetails, setScheduledDetails] = useState(null)
 
   const handleOpenDialog = () => {
     setIsDialogOpen(true)
@@ -19,7 +17,7 @@ const Schedule = () => {
   // This handler receives the submitted data from ScheduleStudioDialog
   const handleScheduleSubmit = ({ date, time, timezone }) => {
     // Store the submitted details
-    setScheduledDetails({ date, time, timezone })
+    onSubmit({ date, time, timezone })
     setIsScheduled(true)
     setIsDialogOpen(false) // Close the dialog after successful submission
   }
@@ -94,7 +92,7 @@ const Schedule = () => {
   }
 
   return (
-    <div className='bg-[#252525] space-y-4 px-6 py-6 rounded-lg'>
+    <div className='bg-[#252525] space-y-4 rounded-lg'>
       <h3 className='text-md font-medium text-white'>Schedule Studio</h3>
       <p className='text-xs text-gray-400'>
         Mark this studio as scheduled to let others know when you will be
@@ -121,6 +119,7 @@ const Schedule = () => {
               {scheduledDetails.timezone}
             </span>
           </div>
+          {!canEdit &&
           <div className='flex gap-2'>
             <Button
               text={'Edit'}
@@ -135,7 +134,7 @@ const Schedule = () => {
               borderColor='border-transparent'
               className='hover:bg-gray-700'
             />
-          </div>
+          </div>}
         </div>
       )}
 
@@ -143,10 +142,6 @@ const Schedule = () => {
         isOpen={isDialogOpen}
         onClose={handleCloseDialog}
         onSubmit={handleScheduleSubmit}
-        // If you want to pre-fill the dialog when editing, pass initial values
-        // initialDate={scheduledDetails?.date}
-        // initialTime={scheduledDetails?.time}
-        // initialTimezone={scheduledDetails?.timezone}
       />
     </div>
   )

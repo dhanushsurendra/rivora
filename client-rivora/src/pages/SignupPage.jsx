@@ -2,10 +2,15 @@ import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { ToastContainer, toast } from 'react-toastify'
-import { useGoogleLogin } from '@react-oauth/google';
+import { useGoogleLogin } from '@react-oauth/google'
 import { FcGoogle } from 'react-icons/fc'
 import axiosInstance from '../api/axios'
-import { authStart, authSuccess, authFailure, saveUserToLocalStorage } from '../redux/auth/authSlice'
+import {
+  authStart,
+  authSuccess,
+  authFailure,
+  saveUserToLocalStorage,
+} from '../redux/auth/authSlice'
 import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
 
@@ -79,55 +84,55 @@ const SignupPage = () => {
     }
   }
 
-   const googleLogin = useGoogleLogin({
-      onSuccess: async (tokenResponse) => {
-        try {
-          const res = await fetch(
-            'https://www.googleapis.com/oauth2/v3/userinfo',
-            {
-              headers: {
-                Authorization: `Bearer ${tokenResponse.access_token}`,
-              },
-            }
-          )
-  
-          const googleUser = await res.json()
-          console.log('Google user info:', googleUser)
-  
-          const response = await axiosInstance.post('/auth/google', {
-            name: googleUser.name,
-            email: googleUser.email,
-            providerId: googleUser.sub,
-            avatar: googleUser.picture,
-          })
-  
-          const userData = response.data
-  
-          dispatch(authSuccess(userData))
-          saveUserToLocalStorage(userData)
-          toast.success('Google sign up successful!', { theme: 'dark' })
-          setTimeout(() => {
-            navigate('/')
-          }, 500)
-        } catch (err) {
-          console.error('Google sign up error:', err)
-          setError('googleError', {
-            type: 'manual',
-            message: 'Google sign up failed. Please try again.',
-          })
-        }
-      },
-      onError: (errorResponse) => {
-        console.error('Google login failed:', errorResponse)
-        const errorMessage = error.response?.data?.message || 'Login failed'
-        dispatch(authFailure(errorMessage))
-        setError('apiError', {
-          type: 'manual',
-          message: errorMessage,
+  const googleLogin = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      try {
+        const res = await fetch(
+          'https://www.googleapis.com/oauth2/v3/userinfo',
+          {
+            headers: {
+              Authorization: `Bearer ${tokenResponse.access_token}`,
+            },
+          }
+        )
+
+        const googleUser = await res.json()
+        console.log('Google user info:', googleUser)
+
+        const response = await axiosInstance.post('/auth/google', {
+          name: googleUser.name,
+          email: googleUser.email,
+          providerId: googleUser.sub,
+          avatar: googleUser.picture,
         })
-        console.error(error)
-      },
-    })
+
+        const userData = response.data
+
+        dispatch(authSuccess(userData))
+        saveUserToLocalStorage(userData)
+        toast.success('Google sign up successful!', { theme: 'dark' })
+        setTimeout(() => {
+          navigate('/')
+        }, 500)
+      } catch (err) {
+        console.error('Google sign up error:', err)
+        setError('googleError', {
+          type: 'manual',
+          message: 'Google sign up failed. Please try again.',
+        })
+      }
+    },
+    onError: (errorResponse) => {
+      console.error('Google login failed:', errorResponse)
+      const errorMessage = error.response?.data?.message || 'Login failed'
+      dispatch(authFailure(errorMessage))
+      setError('apiError', {
+        type: 'manual',
+        message: errorMessage,
+      })
+      console.error(error)
+    },
+  })
 
   return (
     // We'll modify AuthLayout slightly or replace it with a custom container here
@@ -278,30 +283,7 @@ const SignupPage = () => {
               className='w-full bg-[#8A65FD] hover:bg-[#724EE0] text-white font-semibold py-3 rounded-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#8A65FD] flex items-center justify-center cursor-pointer'
               disabled={loading}
             >
-              {loading ? (
-                <svg
-                  className='animate-spin h-5 w-5 text-white'
-                  xmlns='http://www.w3.org/2000/svg'
-                  fill='none'
-                  viewBox='0 0 24 24'
-                >
-                  <circle
-                    className='opacity-25'
-                    cx='12'
-                    cy='12'
-                    r='10'
-                    stroke='currentColor'
-                    strokeWidth='4'
-                  ></circle>
-                  <path
-                    className='opacity-75'
-                    fill='currentColor'
-                    d='M4 12a8 8 0 018-8v8H4z'
-                  ></path>
-                </svg>
-              ) : (
-                'Sign Up'
-              )}
+              {loading ? <Spinner /> : 'Sign Up'}
             </button>
           </form>
           <div className='relative flex items-center justify-center my-6'>

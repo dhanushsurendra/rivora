@@ -2,16 +2,22 @@ import { useState, useEffect } from 'react'
 import { ToastContainer, toast } from 'react-toastify'
 import Button from '../components/Button/Button'
 import Schedule from '../components/Schedule'
+import { useDispatch, useSelector } from 'react-redux'
+import { setSession, setLoading, setError } from '../redux/session/sessionSlice'
+import axiosInstance from '../api/axios'
 
 const CreateStudioPage = () => {
   const [inviteeEmail, setInviteeEmail] = useState('')
+  const [inviteeName, setInviteeName] = useState('')
   const [isInviteSent, setIsInviteSent] = useState(() => {
     const value = localStorage.getItem('isInviteSent')
-    return value !== null ? value : false
+    return value === 'true'
   })
+  const [scheduledDetails, setScheduledDetails] = useState(null)
+  const [studioName, setStudioName] = useState('')
 
   useEffect(() => {
-    localStorage.setItem('isInviteSent', Boolean(isInviteSent))
+    localStorage.setItem('isInviteSent', isInviteSent.toString())
   }, [isInviteSent])
 
   const isValidEmail = (email) => {
@@ -19,45 +25,102 @@ const CreateStudioPage = () => {
     return emailRegex.test(email)
   }
 
-  const handleSendInvite = () => {
+  const userId = useSelector((state) => state.auth.user._id)
+  const sessionId = useSelector((state) => state.session.session?._id)
+  const username = useSelector((state) => state.auth.user.username)
+
+  const handleSendInvite = async () => {
+    if (!inviteeName.trim()) {
+      toast.error('Please enter the guest name.', { theme: 'dark' })
+      return
+    }
     if (inviteeEmail.trim() !== '' && isValidEmail(inviteeEmail)) {
-      // Simulate API call to send invite
-      console.log(`Sending invite to: ${inviteeEmail}`)
+      if (!sessionId) {
+        await createSession()
+      }
 
-      // In a real application, you'd make an actual API call here:
-      // try {
-      //   const response = await fetch('/api/send-invite', {
-      //     method: 'POST',
-      //     headers: { 'Content-Type': 'application/json' },
-      //     body: JSON.stringify({ email: inviteeEmail })
-      //   });
-      //   if (response.ok) {
-      //     toast.success(`Invite sent to ${inviteeEmail}!`);
-      //     setIsInviteSent(true);
-      //     setInviteeEmail(''); // Clear input after sending
-      //   } else {
-      //     toast.error('Failed to send invite. Please try again.');
-      //   }
-      // } catch (error) {
-      //   console.error('Error sending invite:', error);
-      //   toast.error('An error occurred while sending the invite.');
-      // }
+      try {
+        const response = await fetch('/session/send-invitation', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sessionId,
+            guestEmail: inviteeEmail,
+            guestName: inviteeName,
+          }),
+        })
 
-      // For demonstration:
-      setTimeout(() => {
-        toast.success(`Invite sent to ${inviteeEmail}!`, { theme: 'dark' })
-        setIsInviteSent(true)
-        setInviteeEmail('') // Clear input after sending
-      }, 500)
+        const data = await response.json()
+        if (response.ok) {
+          toast.success(data.message, { theme: 'dark' })
+          setIsInviteSent(true)
+          setInviteeEmail('')
+          setInviteeName('')
+        } else {
+          toast.error(data.message || 'Failed to send invite.', {
+            theme: 'dark',
+          })
+        }
+      } catch (error) {
+        console.error('Error:', error)
+        toast.error('An error occurred while sending the invite.', {
+          theme: 'dark',
+        })
+      }
     } else {
-      toast.error('Please enter an email address to send an invite.', {
-        theme: 'dark',
-      })
+      toast.error('Please enter a valid email address.', { theme: 'dark' })
     }
   }
 
-  const handleCreateStudio = () => {
-    window.location.href = '/device-setup'
+  const dispatch = useDispatch()
+  const loading = useSelector((state) => state.session.loading)
+
+  const handleCreateStudio = async () => {
+    try {
+      if (sessionId) {
+        toast.error('Session is already created.', { theme: 'dark' })
+        return
+      }
+
+      if (!studioName.trim()) {
+        toast.error('Please enter a studio name.', { theme: 'dark' })
+        return
+      }
+
+      dispatch(setLoading(true))
+
+      const scheduledAt =
+        scheduledDetails?.date && scheduledDetails?.time
+          ? new Date(
+              `${scheduledDetails.date}T${scheduledDetails.time}:00Z`
+            ).toISOString()
+          : new Date().toISOString()
+
+      const body = {
+        title: studioName,
+        scheduledAt,
+        host: userId,
+      }
+
+      const response = await axiosInstance.post('/session/create-session', body)
+
+      dispatch(setSession(response.data.session))
+      toast.success('Session created successfully!', { theme: 'dark' })
+      return response.data
+    } catch (error) {
+      console.error('Error creating session:', error)
+      const msg =
+        error.response?.data?.message ||
+        'An error occurred while creating session'
+      dispatch(setError(msg))
+      toast.error(msg, { theme: 'dark' })
+    } finally {
+      dispatch(setLoading(false))
+    }
+  }
+
+  const handleScheduleSubmit = (details) => {
+    setScheduledDetails(details)
   }
 
   return (
@@ -88,47 +151,27 @@ const CreateStudioPage = () => {
                 type='text'
                 className='rounded-lg bg-[#1E1E1E] text-white mt-3 md:mt-0 py-2 px-4 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-[#8A65FD] w-64'
                 placeholder='Name your studio...'
+                onChange={(e) => setStudioName(e.target.value)}
+                value={studioName}
+                disabled={sessionId}
               />
             </div>
           </div>
-
-          <div className='rounded-lg flex flex-col md:flex-row md:justify-between md:items-center'>
-            <div className='space-y-1'>
-              <h3 className='text-md font-medium'>Recording Type</h3>
-              <p className='text-sm text-gray-400'>
-                This will only affect what gets recorded.
-              </p>
-              <p className='text-sm text-gray-400'>
-                You can still see each other during the live call.
-              </p>
-            </div>
-            <div className='relative w-64 mt-3 md:mt-0'>
-              <select className='appearance-none rounded-lg bg-[#1E1E1E] text-white px-4 py-2 pr-10 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-[#8A65FD] w-full'>
-                <option value='audio'>Audio Only</option>
-                <option value='video'>Video & Audio</option>
-              </select>
-
-              {/* Custom Down Arrow */}
-              <div className='pointer-events-none absolute inset-y-0 right-3 flex items-center text-white'>
-                <svg
-                  className='w-4 h-4'
-                  fill='none'
-                  stroke='currentColor'
-                  strokeWidth='2'
-                  viewBox='0 0 24 24'
-                >
-                  <path
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                    d='M19 9l-7 7-7-7'
-                  />
-                </svg>
-              </div>
-            </div>
-          </div>
+          <Schedule
+            canEdit={sessionId}
+            scheduledDetails={scheduledDetails}
+            onSubmit={handleScheduleSubmit}
+          />
         </div>
 
-        <Schedule />
+        <div className='flex'>
+          <Button
+            onClick={handleCreateStudio}
+            text={'Create Studio'}
+            isLoading={loading}
+            isDisabled={sessionId}
+          />
+        </div>
 
         <div className='bg-[#252525] space-y-4 p-6 rounded-lg my-6'>
           <h3 className='text-md font-medium'>Invite Guest</h3>
@@ -136,33 +179,32 @@ const CreateStudioPage = () => {
             Invite guest to your studio by sending them an email. They will
             receive a link to join the studio.
           </p>
+
           <input
-            type='email'
-            className='rounded-lg bg-[#1E1E1E] text-white py-2 px-4 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-[#8A65FD] w-full sm:w-72 mr-2'
-            placeholder='Enter guest email...'
-            value={inviteeEmail}
-            // disabled={isInviteSent}
+            type='text'
+            className='rounded-lg bg-[#1E1E1E] text-white py-2 px-4 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-[#8A65FD] w-full sm:w-72 mb-2 mr-3'
+            placeholder='Enter guest name...'
+            value={inviteeName}
+            disabled={isInviteSent}
             onChange={(e) => {
-              setInviteeEmail(e.target.value)
+              setInviteeName(e.target.value)
               if (isInviteSent && e.target.value.trim() !== '') {
                 setIsInviteSent(false)
               }
             }}
           />
+
           <Button
-            text={'Send Invite'}
+            text={isInviteSent ? 'Invite Sent' : 'Send Invite'}
             onClick={handleSendInvite}
-            className={`hover:bg-[#6f4ed1] ${
-              isInviteSent ? 'opacity-50 cursor-not-allowed' : ''
-            }`}
-            isDisabled={isInviteSent}
-            bgColor='bg-[#8A65FD]'
-            textColor='text-white'
+            disabled={isInviteSent}
+            className={`${
+              isInviteSent ? 'bg-gray-600 cursor-not-allowed' : 'bg-[#8A65FD]'
+            } rounded-lg py-2 px-6 font-semibold`}
           />
-          <ToastContainer />
         </div>
-        <Button text={'Create Studio'} onClick={handleCreateStudio} />
       </main>
+      <ToastContainer />
     </div>
   )
 }

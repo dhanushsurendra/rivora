@@ -1,27 +1,30 @@
-import { useState, useEffect } from 'react';
-import Button from '../Button/Button'; // Assuming your Button component exists
+import { useState } from 'react'
+import Button from '../Button/Button' // Assuming your Button component exists
 
 const ScheduleStudioDialog = ({ isOpen = true, onClose, onSubmit }) => {
-
-  const [time, setTime] = useState(new Date().toTimeString().slice(0, 5)); 
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]); 
-  const [timezone, setTimezone] = useState(new Date().toString().match(/\(([^)]+)\)/)[1]);
-
+  const [time, setTime] = useState(new Date().toTimeString().slice(0, 5))
+  const [date, setDate] = useState(new Date().toISOString().split('T')[0])
+  // const timeZones = Intl.supportedValuesOf('timeZone')
+  // const [selectedTimeZone, setSelectedTimeZone] = useState(
+  //   Intl.DateTimeFormat().resolvedOptions().timeZone
+  // )
   if (!isOpen) {
-    return null; 
+    return null
   }
 
   return (
     <div
       className='fixed inset-0 bg-black/50 flex justify-center items-center z-50 p-4'
-      onClick={onClose} 
+      onClick={onClose}
     >
       <div
         className='bg-[#1A1A1A] rounded-xl shadow-2xl w-full max-w-md p-8 relative'
         onClick={(e) => e.stopPropagation()}
       >
         {/* Dialog Header */}
-        <div className='flex justify-between items-center pb-4 mb-6'> {/* Added subtle border */}
+        <div className='flex justify-between items-center pb-4 mb-6'>
+          {' '}
+          {/* Added subtle border */}
           <h2 className='text-xl font-semibold text-white'>
             Schedule your studio
           </h2>
@@ -76,16 +79,16 @@ const ScheduleStudioDialog = ({ isOpen = true, onClose, onSubmit }) => {
 
           {/* Timezone Field */}
           <div className='mb-8 relative'>
-            <label
+            {/* <label
               htmlFor='timezone'
               className='block text-white text-sm font-medium mb-2'
             >
               Timezone <span className='text-red-500'>*</span>
-            </label>
-            <select
+            </label> */}
+            {/* <select
               id='timezone'
-              value={timezone}
-              onChange={(e) => setTimezone(e.target.value)}
+              value={selectedTimeZone}
+              onChange={(e) => setSelectedTimeZone(e.target.value)}
               className='w-full p-3 bg-[#252525] rounded-lg text-white placeholder-gray-500
                 focus:outline-none focus:ring-2 focus:ring-[#8A65FD] focus:border-[#8A65FD]
                 appearance-none pr-8 bg-no-repeat bg-[right_0.75rem_center] bg-[length:1.25rem_1.25rem]'
@@ -94,42 +97,37 @@ const ScheduleStudioDialog = ({ isOpen = true, onClose, onSubmit }) => {
                 backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%239CA3AF'%3e%3cpath d='M7 8l3 3 3-3' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3e%3c/svg%3e")`,
               }}
             >
-              {/* Options based on common timezones, you can expand this list */}
-              <option value='(GMT-05:00) Eastern Time'>
-                (GMT-05:00) Eastern Time
-              </option>
-              <option value='(GMT-08:00) Pacific Time'>
-                (GMT-08:00) Pacific Time
-              </option>
-              <option value='(GMT+00:00) UTC'>(GMT+00:00) UTC</option>
-              <option value='(GMT+05:30) Indian Standard Time'>
-                (GMT+05:30) Indian Standard Time
-              </option>
-              {/* Add more timezones as needed */}
-            </select>
+              {timeZones.map((tz) => (
+                <option key={tz} value={tz}>
+                  {tz}
+                </option>
+              ))}
+            </select> */}
           </div>
 
           {/* Action Buttons */}
-          <div className='flex justify-end gap-4 pt-6'> {/* Added subtle border */}
+          <div className='flex justify-end gap-4 pt-6'>
+            {' '}
+            {/* Added subtle border */}
             {/* Cancel Button */}
             <Button
               text={'Cancel'}
               bgColor='bg-[#252525]'
-              className="hover:bg-gray-700" 
+              className='hover:bg-gray-700'
               onClick={onClose}
             />
             {/* Schedule Button */}
             <Button
               text={'Schedule'}
-              className="hover:bg-[#6f4ed1]" // Slightly darker purple on hover
-              type="submit"
-              onClick={() => onSubmit({ date, time, timezone })}
+              className='hover:bg-[#6f4ed1]' // Slightly darker purple on hover
+              type='submit'
+              onClick={() => onSubmit({ date, time })}
             />
           </div>
         </form>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default ScheduleStudioDialog;
+export default ScheduleStudioDialog
