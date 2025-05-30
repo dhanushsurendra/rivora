@@ -3,13 +3,28 @@ const http = require("http");
 const socketIO = require("socket.io");
 const cors = require("cors");
 
+const dotenv = require('dotenv');
+const cookieParser = require('cookie-parser');
+const authRoutes = require('./routes/authRoutes.js');
+const mongoose = require('mongoose');
+
+dotenv.config();
+
 const app = express();
-app.use(cors());
+app.use(cors({
+  origin: 'http://localhost:5173', // Vite dev server
+  credentials: true               // Allow cookies
+}));
+
+app.use(express.json());
+app.use(cookieParser());
+
+app.use('/api/auth', authRoutes);
 
 const server = http.createServer(app);
 const io = socketIO(server, {
   cors: {
-    origin: "*",
+    origin: "http://localhost:5713", // Adjust this to your frontend URL
     methods: ["GET", "POST"]
   }
 });
@@ -17,6 +32,15 @@ const io = socketIO(server, {
 // Use a Set to store connected user IDs for efficient lookup and uniqueness
 const connectedUsers = new Set();
 const MAX_USERS = 2; // Define the maximum number of users allowed for active peering
+
+mongoose.connect(process.env.MONGO_URI)
+.then(() => {
+  console.log('MongoDB connected');
+  // Start your Express server here
+})
+.catch((err) => {
+  console.error('MongoDB connection error:', err);
+});
 
 io.on("connection", socket => {
   console.log(`[${socket.id}] New user connected.`);

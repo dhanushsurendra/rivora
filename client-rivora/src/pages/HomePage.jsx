@@ -70,7 +70,7 @@ const HomePage = () => {
   }, [])
 
   return (
-    <div className='flex flex-col min-h-screen text-white bg-[#0F0F11]'>
+    <div className='flex flex-col min-h-screen text-white bg-[#1A1A1A]'>
       {/* Header - Sticky, with dynamic background on scroll */}
       <header
         className={`fixed w-full text-white px-6 py-4 top-0 z-50 transition-colors duration-300 ${

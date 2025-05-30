@@ -25,7 +25,7 @@ const iceServers = [
   // { urls: 'turn:YOUR_TURN_SERVER_IP:PORT', username: 'YOUR_USERNAME', credential: 'YOUR_PASSWORD' }
 ]
 
-function Podcast() {
+const StudioPage = () => {
   const [stream, setStream] = useState(null) // Stores the local media stream
   const [otherUserId, setOtherUserId] = useState(null) // Stores the ID of the other connected user
   const [roomFull, setRoomFull] = useState(false) // State to indicate if the room is full
@@ -543,4 +543,4 @@ function Podcast() {
   )
 }
 
-export default Podcast
+export default StudioPage

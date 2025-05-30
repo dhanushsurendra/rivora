@@ -1,5 +1,5 @@
 import './App.css'
-import Podcast from './pages/Podcast'
+import Podcast from './pages/StudioPage'
 
 function App() {
   return (
