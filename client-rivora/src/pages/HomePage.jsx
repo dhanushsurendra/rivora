@@ -11,6 +11,12 @@ import {
 
 import heroImg from '../assets/hero.jpg'
 
+import { useDispatch, useSelector } from 'react-redux'
+import { logout, removeUserFromLocalStorage } from '../redux/auth/authSlice'
+import axiosInstance from '../api/axios'
+import { toast, ToastContainer } from 'react-toastify'
+import { useNavigate } from 'react-router-dom'
+
 // --- Component: Button ---
 const Button = React.forwardRef(({ className, children, ...props }, ref) => (
   <button
@@ -52,6 +58,7 @@ CardContent.displayName = 'CardContent'
 // --- Main Component: HomePage ---
 const HomePage = () => {
   const [headerBg, setHeaderBg] = useState(false)
+  const isAuthenticated = useSelector((state) => state.auth.isAuthenticated)
 
   useEffect(() => {
     const handleScroll = () => {
@@ -69,6 +76,28 @@ const HomePage = () => {
     }
   }, [])
 
+  const dispatch = useDispatch()
+  const navigate = useNavigate()
+
+  const handleLogout = async () => {
+    try {
+      await axiosInstance.post('/auth/logout', {
+        withCredentials: true,
+      })
+
+      removeUserFromLocalStorage()
+      dispatch(logout())
+
+      toast.success('Logout successful!', { theme: 'dark' })
+
+      setTimeout(() => {
+        navigate('/login')
+      }, 500)
+    } catch (error) {
+      console.error('Logout failed', error)
+    }
+  }
+
   return (
     <div className='flex flex-col min-h-screen text-white bg-[#1A1A1A]'>
       {/* Header - Sticky, with dynamic background on scroll */}
@@ -81,7 +110,6 @@ const HomePage = () => {
           <h1 className='text-xl font-semibold tracking-wide text-[#8A65FD]'>
             Rivora
           </h1>
-
           <nav className='hidden md:flex space-x-6 text-gray-300 font-medium'>
             <a
               href='#features'
@@ -102,13 +130,21 @@ const HomePage = () => {
               Pricing
             </a>
           </nav>
-
-          <RouterLink
-            to='/login'
-            className='bg-[#8A65FD] text-white px-4 py-2 rounded-full text-sm font-medium hover:bg-[#724EE0] transition-colors duration-200'
-          >
-            Login
-          </RouterLink>
+          {isAuthenticated ? (
+            <button
+              onClick={handleLogout}
+              className='bg-[#8A65FD] text-white px-4 py-2 rounded-full text-sm font-medium hover:bg-[#724EE0] transition-colors duration-200 cursor-pointer'
+            >
+              Logout
+            </button>
+          ) : (
+            <RouterLink
+              to='/login'
+              className='bg-[#8A65FD] text-white px-4 py-2 rounded-full text-sm font-medium hover:bg-[#724EE0] transition-colors duration-200 cursor-pointer'
+            >
+              Login
+            </RouterLink>
+          )}
         </div>
       </header>
 
@@ -414,6 +450,7 @@ const HomePage = () => {
           </nav>
         </div>
       </footer>
+      <ToastContainer />
     </div>
   )
 }

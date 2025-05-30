@@ -1,13 +1,19 @@
-import { useState } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
+import {
+  authStart,
+  authSuccess,
+  authFailure,
+  saveUserToLocalStorage,
+} from '../redux/auth/authSlice'
+
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { ToastContainer, toast } from 'react-toastify'
-// If you uncomment useGoogleLogin, ensure it's imported
-// import { useGoogleLogin } from '@react-oauth/google';
-// import AuthLayout from '../Layout/AuthLayout'; // No longer directly using AuthLayout
+import { useGoogleLogin } from '@react-oauth/google'
 import { FcGoogle } from 'react-icons/fc'
 import axiosInstance from '../api/axios'
+import { useNavigate } from 'react-router-dom'
 
 // Define your Zod schema for the login form
 const loginSchema = z.object({
@@ -27,67 +33,86 @@ const LoginPage = () => {
     resolver: zodResolver(loginSchema),
   })
 
-  const [loading, setLoading] = useState(false)
+  const navigate = useNavigate()
 
+  const dispatch = useDispatch()
+  const loading = useSelector((state) => state.auth.loading)
   const handleLoginSubmit = async (data) => {
     console.log('Logging in with:', data)
-    setError('apiError', { message: '' })
-    setLoading(true)
+    dispatch(authStart())
 
     try {
-      const response = await axiosInstance.post('/auth/login', data)
-
+      const res = await axiosInstance.post('/auth/login', data, {
+        withCredentials: true,
+      })
+      const userData = res.data.user
+      dispatch(authSuccess(userData))
+      saveUserToLocalStorage(userData)
       toast.success('Login successful!', { theme: 'dark' })
 
       setTimeout(() => {
-        window.location.href = '/'
-      }, 1000)
+        navigate('/')
+      }, 500)
     } catch (error) {
-      const message =
-        error.response?.data?.message || 'Login failed. Please try again.'
-
-      setError('credentials', {
+      const errorMessage = error.response?.data?.message || 'Login failed'
+      dispatch(authFailure(errorMessage))
+      setError('apiError', {
         type: 'manual',
-        message,
+        message: errorMessage,
       })
-    } finally {
-      setLoading(false)
+      console.error(error)
     }
   }
 
-  // const googleLogin = useGoogleLogin({
-  //   onSuccess: async (tokenResponse) => {
-  //     console.log('Google login successful:', tokenResponse)
-  //     setError('googleError', { message: '' })
+  const googleLogin = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      try {
+        const res = await fetch(
+          'https://www.googleapis.com/oauth2/v3/userinfo',
+          {
+            headers: {
+              Authorization: `Bearer ${tokenResponse.access_token}`,
+            },
+          }
+        )
 
-  //     try {
-  //       const res = await fetch(
-  //         'https://www.googleapis.com/oauth2/v3/userinfo',
-  //         {
-  //           headers: {
-  //             Authorization: `Bearer ${tokenResponse.access_token}`,
-  //           },
-  //         }
-  //       )
-  //       const user = await res.json()
-  //       console.log('Google user info:', user)
-  //       alert(`Logged in with Google: ${user.name}`)
-  //     } catch (err) {
-  //       console.error('Failed to fetch Google user info:', err)
-  //       setError('googleError', {
-  //         type: 'manual',
-  //         message: 'Google login failed. Please try again.',
-  //       })
-  //     }
-  //   },
-  //   onError: (errorResponse) => {
-  //     console.error('Google login failed:', errorResponse)
-  //     setError('googleError', {
-  //       type: 'manual',
-  //       message: 'Google login failed. Please try again.',
-  //     })
-  //   },
-  // })
+        const googleUser = await res.json()
+        console.log('Google user info:', googleUser)
+
+        const response = await axiosInstance.post('/auth/google', {
+          name: googleUser.name,
+          email: googleUser.email,
+          providerId: googleUser.sub,
+          avatar: googleUser.picture,
+        })
+
+        const userData = response.data
+
+        dispatch(authSuccess(userData))
+        saveUserToLocalStorage(userData)
+        toast.success('Google login successful!', { theme: 'dark' })
+        setTimeout(() => {
+          navigate('/')
+        }, 500)
+      } catch (err) {
+        console.error('Google login error:', err)
+        setError('googleError', {
+          type: 'manual',
+          message: 'Google login failed. Please try again.',
+        })
+      }
+    },
+    onError: (errorResponse) => {
+      console.error('Google login failed:', errorResponse)
+      const errorMessage = error.response?.data?.message || 'Login failed'
+      dispatch(authFailure(errorMessage))
+      setError('apiError', {
+        type: 'manual',
+        message: errorMessage,
+      })
+      console.error(error)
+    },
+  })
 
   return (
     // We'll directly create the two-column layout here
@@ -230,10 +255,8 @@ const LoginPage = () => {
           </div>
 
           <button
-            onClick={() => {
-              /* googleLogin() */
-            }} // Uncomment if googleLogin is used
-            className='w-full flex items-center justify-center space-x-2 bg-white text-gray-800 font-semibold py-3 rounded-md transition-colors duration-200 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500'
+            onClick={googleLogin}
+            className='w-full flex items-center justify-center space-x-2 bg-white text-gray-800 font-semibold py-3 rounded-md transition-colors duration-200 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer'
           >
             <FcGoogle className='w-6 h-6' />
             <span>Login with Google</span>

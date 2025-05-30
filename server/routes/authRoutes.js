@@ -1,23 +1,18 @@
-const express = require('express');
-const { loginUser, signupUser } = require('../controllers/authController.js');
+const express = require('express')
+const {
+  loginUser,
+  signupUser,
+  logoutUser,
+  googleLogin
+} = require('../controllers/authController.js')
 
-const router = express.Router();
+const passport = require('passport')
 
-router.post('/login', loginUser);
-router.post('/signup', signupUser); 
+const router = express.Router()
 
-// // Google OAuth login
-// router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
+router.post('/login', loginUser)
+router.post('/signup', signupUser)
+router.post('/logout', logoutUser)
+router.post('/google', googleLogin)
 
-// // Google OAuth callback
-// router.get(
-//   '/google/callback',
-//   passport.authenticate('google', { failureRedirect: '/login' }),
-//   (_, res) => {
-//     // Redirect after successful login
-//     res.redirect('/dashboard'); // or send a JWT cookie if SPA
-//   }
-// );
-
-
-module.exports = router;
+module.exports = router
