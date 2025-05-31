@@ -284,7 +284,7 @@ const StudioDetailsPage = () => {
         { theme: 'dark', autoClose: 5000 }
       )
     } else {
-      navigate(`/join/${sessionId}`)
+      navigate(`/device-setup/${sessionId}`)
     }
   }
 
@@ -349,29 +349,30 @@ const StudioDetailsPage = () => {
             {/* Card for Status */}
             <div
               className='
-          flex items-center p-5 bg-[#1E1E1E] rounded-lg
-          shadow-md border border-[#2e2e2e]
-          hover:border-[#8A65FD] hover:shadow-lg
-          transition-all duration-300
-        '
+                flex items-center p-5 bg-[#1E1E1E] rounded-lg
+                shadow-md border border-[#2e2e2e]
+                hover:border-[#8A65FD] hover:shadow-lg
+                transition-all duration-300
+                '
             >
-              <StatusDot
-                color={
-                  isLive
-                    ? 'bg-green-500'
-                    : isOver
-                    ? 'bg-red-500'
-                    : 'bg-yellow-500'
-                }
-              />{' '}
+              {!isLive && (
+                <StatusDot
+                  color={
+                    isLive
+                      ? 'bg-green-500'
+                      : isOver
+                      ? 'bg-red-500'
+                      : 'bg-yellow-500'
+                  }
+                />
+              )}
               {/* Now h-3 w-3 mr-3 */}
               <div>
                 <p className='font-medium text-sm text-gray-400'>Status</p>
                 <p className='text-lg font-semibold'>
                   {isLive ? (
                     <span className='text-green-400 flex items-center'>
-                      <span className='h-4 w-4 rounded-full bg-green-500 animate-pulse mr-3'></span>{' '}
-                      {/* Now h-4 w-4 mr-3 */}
+                      <span className='h-3 w-3 rounded-full bg-green-500 animate-pulse mr-3'></span>{' '}
                       Live Now
                     </span>
                   ) : isOver ? (

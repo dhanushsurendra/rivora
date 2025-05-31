@@ -29,9 +29,9 @@ const router = createBrowserRouter([
       {
         element: <PrivateRoute />,
         children: [
-          { path: 'studio', element: <StudioPage /> },
+          { path: 'studio/:sessionId', element: <StudioPage /> },
           { path: 'create-studio', element: <CreateSTudioPage /> },
-          { path: 'device-setup', element: <DeviceSetupPage /> },
+          { path: 'device-setup/:sessionId', element: <DeviceSetupPage /> },
           { path: 'studios', element: <StudiosPage /> },
           { path: '/my-studios', element: <StudioListPage /> },
           { path: '/my-studios/:sessionId', element: <StudioDetailsPage />}
