@@ -1,8 +1,17 @@
 const express = require('express')
-const { sendInvitation, createSession } = require('../controllers/sessionController.js')
+const {
+  sendInvitation,
+  createSession,
+  getMySessions,
+  getSessionById,
+} = require('../controllers/sessionController.js')
+const authenticateToken = require('../middlewares/authenticationToken.js')
 
-router = express.Router()
-router.post('/send-invitation', sendInvitation)
-router.post('/create-session', createSession)
+const router = express.Router()
+router.post('/send-invitation', authenticateToken, sendInvitation)
+router.post('/create-session', authenticateToken, createSession)
+
+router.get('/my-sessions', authenticateToken, getMySessions)
+router.get('/:sessionId', authenticateToken, getSessionById)
 
 module.exports = router

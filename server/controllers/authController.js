@@ -34,6 +34,8 @@ const loginUser = async (req, res) => {
       expiresIn: process.env.JWT_EXPIRES_IN || '1d',
     })
 
+    console.log(token)
+
     // Set cookie
     res.cookie('token', token, {
       httpOnly: true,
@@ -63,8 +65,6 @@ const signupUser = async (req, res) => {
 
     // Hash the password
     const passwordHash = await bcrypt.hash(password, 10)
-
-    console.log(process.env.JWT_SECRET)
 
     // Create new user document
     const newUser = new User({

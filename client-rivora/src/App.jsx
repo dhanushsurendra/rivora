@@ -10,11 +10,13 @@ import LoginPage from './pages/LoginPage.jsx'
 import SignupPage from './pages/SignupPage.jsx'
 import StudioPage from './pages/StudioPage.jsx'
 import CreateSTudioPage from './pages/CreateStudioPage.jsx'
-import StudiosPage from './pages/StudiosPage.jsx'
+import StudiosPage from './pages/StudioListPage.jsx'
 import NotFoundPage from './pages/NotFoundPage.jsx'
 import DeviceSetupPage from './pages/DeviceSetupPage.jsx'
 import PrivateRoute from './components/PrivateRoute.jsx'
 import RootLoader from './components/RootLoader.jsx'
+import StudioListPage from './pages/StudioListPage.jsx'
+import StudioDetailsPage from './pages/StudioDetailsPage.jsx'
 
 const router = createBrowserRouter([
   {
@@ -31,6 +33,9 @@ const router = createBrowserRouter([
           { path: 'create-studio', element: <CreateSTudioPage /> },
           { path: 'device-setup', element: <DeviceSetupPage /> },
           { path: 'studios', element: <StudiosPage /> },
+          { path: '/my-studios', element: <StudioListPage /> },
+          { path: '/my-studios/:sessionId', element: <StudioDetailsPage />}
+          // { path: '/join/:sessionId" element={<div>Join Session Page - Implement this!</div>} />
         ],
       },
       { path: '*', element: <NotFoundPage /> },
