@@ -34,38 +34,37 @@ const CreateStudioPage = () => {
       toast.error('Please enter the guest name.', { theme: 'dark' })
       return
     }
+
     if (inviteeEmail.trim() !== '' && isValidEmail(inviteeEmail)) {
       if (!sessionId) {
         await createSession()
       }
 
+      const body = {
+        sessionId,
+        userId,
+        guestEmail: inviteeEmail,
+        guestName: inviteeName.split('@')[0]
+      }
+
       try {
-        const response = await fetch('/session/send-invitation', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            sessionId,
-            guestEmail: inviteeEmail,
-            guestName: inviteeName,
-          }),
+        const response = await axiosInstance.post('/session/send-invitation', {
+          sessionId,
+          userId,
+          guestEmail: inviteeEmail,
+          guestName: inviteeName.split('@')[0],
         })
 
-        const data = await response.json()
-        if (response.ok) {
-          toast.success(data.message, { theme: 'dark' })
-          setIsInviteSent(true)
-          setInviteeEmail('')
-          setInviteeName('')
-        } else {
-          toast.error(data.message || 'Failed to send invite.', {
-            theme: 'dark',
-          })
-        }
+        toast.success(response.data.message, { theme: 'dark' })
+        setIsInviteSent(true)
+        setInviteeEmail('')
+        setInviteeName('')
       } catch (error) {
         console.error('Error:', error)
-        toast.error('An error occurred while sending the invite.', {
-          theme: 'dark',
-        })
+        const msg =
+          error.response?.data?.message ||
+          'An error occurred while sending the invite.'
+        toast.error(msg, { theme: 'dark' })
       }
     } else {
       toast.error('Please enter a valid email address.', { theme: 'dark' })
