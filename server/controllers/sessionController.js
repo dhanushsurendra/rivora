@@ -53,7 +53,7 @@ const sendInvitation = async (req, res) => {
 
     const participantPayload = {
       sessionId: sessionId,
-      role: 'participant',
+      role: 'audience',
     }
 
     const guestToken = jwt.sign(guestPayload, process.env.JWT_SECRET)
@@ -71,8 +71,8 @@ const sendInvitation = async (req, res) => {
 
     await session.save()
 
-    const inviteLink = `${process.env.FRONTEND_URL}/join/${guestToken}`
-    const participantLink = `${process.env.FRONTEND_URL}/join/${participantToken}`
+    const inviteLink = `${process.env.FRONTEND_URL}/device-setup/${guestToken}`
+    const audienceLink = `${process.env.FRONTEND_URL}/device-setup/${participantToken}`
 
     await transporter.sendMail({
       from: process.env.SMTP_USER,
@@ -103,7 +103,7 @@ const sendInvitation = async (req, res) => {
 
     res.status(200).json({
       message: `Invite sent to ${guestEmail}`,
-      participantLink: participantLink,
+      audienceLink,
     })
   } catch (error) {
     console.error('Error sending invite:', error)
@@ -202,7 +202,16 @@ const getSessionById = async (req, res) => {
       })
     }
 
-    res.status(200).json({ message: 'Session fetched successfully', session })
+    const hostPayload = {
+      sessionId: sessionId,
+      role: 'host',
+    }
+
+    const hostToken = jwt.sign(hostPayload, process.env.JWT_SECRET)
+
+    res
+      .status(200)
+      .json({ message: 'Session fetched successfully', session, hostToken })
   } catch (error) {
     console.error('Error fetching session by ID:', error)
     res.status(500).json({ message: 'Server error fetching session.' })

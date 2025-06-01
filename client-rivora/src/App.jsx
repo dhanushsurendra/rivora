@@ -31,11 +31,10 @@ const router = createBrowserRouter([
         children: [
           { path: 'studio/:sessionId', element: <StudioPage /> },
           { path: 'create-studio', element: <CreateSTudioPage /> },
-          { path: 'device-setup/:sessionId', element: <DeviceSetupPage /> },
+          { path: 'device-setup/:token', element: <DeviceSetupPage /> },
           { path: 'studios', element: <StudiosPage /> },
           { path: '/my-studios', element: <StudioListPage /> },
           { path: '/my-studios/:sessionId', element: <StudioDetailsPage />}
-          // { path: '/join/:sessionId" element={<div>Join Session Page - Implement this!</div>} />
         ],
       },
       { path: '*', element: <NotFoundPage /> },

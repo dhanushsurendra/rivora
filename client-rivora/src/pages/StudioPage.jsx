@@ -1,4 +1,5 @@
 import { useRef, useEffect, useState, useCallback } from 'react'
+import { useParams, useNavigate } from 'react-router-dom'
 import Peer from 'simple-peer'
 import io from 'socket.io-client'
 
@@ -6,7 +7,11 @@ import RightPanel from '../components/RightPanel'
 import VideoControls from '../components/VideoControls'
 import Header from '../components/PodcastHeader'
 import UserVideos from '../components/UserVideos'
-
+import { useDispatch, useSelector } from 'react-redux'
+import { setError, setLoading, setSession } from '../redux/session/sessionSlice'
+import axiosInstance from '../api/axios'
+import { MoonLoader } from 'react-spinners'
+import { toast } from 'react-toastify'
 // Socket connection should be outside the component to avoid re-creating on re-renders
 // IMPORTANT: Replace "http://localhost:5000" with your computer's local IP address
 // if testing on different devices (e.g., "http://192.168.1.100:5000")
@@ -26,13 +31,15 @@ const iceServers = [
 ]
 
 const StudioPage = () => {
+  const { token } = useParams()
+  const navigate = useNavigate()
+  const dispatch = useDispatch()
+
   const [stream, setStream] = useState(null) // Stores the local media stream
   const [otherUserId, setOtherUserId] = useState(null) // Stores the ID of the other connected user
   const [roomFull, setRoomFull] = useState(false) // State to indicate if the room is full
   const [permissionDenied, setPermissionDenied] = useState(false) // State for permission issues
-
-  const [showDialog, setShowDialog] = useState(false)
-  const [email, setEmail] = useState('')
+  const [sessionId, setSessionId] = useState('')
 
   // UI States for buttons (no functional implementation in this code)
   const [isRecording, setIsRecording] = useState(false)
@@ -199,28 +206,85 @@ const StudioPage = () => {
     },
     [cleanupCall]
   )
+  const fetchSessionDetails = async () => {
+    setSessionId('')
+    if (!sessionId) {
+      console.warn(
+        'No sessionId found in URL params. Cannot fetch studio details.'
+      )
+      toast.error('Session ID is missing. Cannot load studio details.', {
+        theme: 'dark',
+      })
+      navigate('/my-studios') // Redirect if sessionId is missing
+      return
+    }
+
+    dispatch(setLoading(true)) // Set loading state in Redux
+    try {
+      console.log('here')
+      // Make the API call to your backend
+      // Adjust the endpoint if it's different
+      const response = await axiosInstance.get(`/session/${sessionId}`)
+      console.log(response)
+
+      if (response.data && response.data.session) {
+        dispatch(setSession(response.data.session)) // Store session in Redux
+        // Optionally, if the backend sends a default user name or specific host name, you can set it here
+        // setUserName(response.data.session.defaultUserName || '');
+      } else {
+        // If response doesn't contain expected data, throw an error
+        throw new Error('Invalid session data received from backend.')
+      }
+    } catch (error) {
+      console.error('Error fetching session details:', error)
+      const msg =
+        error.response?.data?.message ||
+        'Failed to load studio details. Please check your connection or try again later.'
+      dispatch(setError(msg)) // Set error state in Redux
+      navigate('/my-studios') // Redirect on API error
+    } finally {
+      dispatch(setLoading(false)) // Always clear loading state
+    }
+  }
 
   // Effect to get user media (camera and microphone access)
   useEffect(() => {
-    console.log('[useEffect-getUserMedia] Requesting user media...')
-    navigator.mediaDevices
-      .getUserMedia({ video: true, audio: true })
-      .then((currentStream) => {
-        setStream(currentStream)
+    let currentMediaStream = null // To hold the stream locally for this effect's scope
+
+    const setupMediaAndSession = async () => {
+      try {
+        // 1. Fetch session details (await this)
+        await fetchSessionDetails()
+        console.log(
+          '[useEffect-setupMediaAndSession] Session details fetched successfully.'
+        )
+
+        // 2. Get user media
+        currentMediaStream = await navigator.mediaDevices.getUserMedia({
+          video: true,
+          audio: true,
+        })
+        setStream(currentMediaStream) // Update state
         setPermissionDenied(false)
+
         if (userVideo.current) {
           console.log('Muted:', userVideo.current.muted)
-          userVideo.current.srcObject = currentStream
+          userVideo.current.srcObject = currentMediaStream
         }
         console.log(
-          "[useEffect-getUserMedia] Got user media successfully. Emitting 'join-room'."
+          "[useEffect-setupMediaAndSession] Got user media successfully. Emitting 'join-room'."
         )
         socket.emit('join-room')
-      })
-      .catch((err) => {
-        console.error('[useEffect-getUserMedia] Failed to get media:', err)
+      } catch (err) {
+        console.error(
+          '[useEffect-setupMediaAndSession] Error during setup:',
+          err
+        )
         setPermissionDenied(true)
-        cleanupCall()
+        // Only call cleanupCall if you want to explicitly clean up connections/peers
+        // right after a media error. Be careful not to double-cleanup.
+        // cleanupCall(); // Uncomment if cleanupCall handles only error state cleanup
+
         if (
           err.name === 'NotAllowedError' ||
           err.name === 'PermissionDeniedError'
@@ -237,18 +301,38 @@ const StudioPage = () => {
             'An error occurred while accessing media devices: ' + err.message
           )
         }
-      })
-
-    return () => {
-      console.log(
-        '[useEffect-getUserMedia] Component unmounting or effect re-running. Cleaning up local stream.'
-      )
-      if (stream) {
-        stream.getTracks().forEach((track) => track.stop())
-        setStream(null)
       }
     }
-  }, [])
+
+    // Call the async function
+    setupMediaAndSession()
+
+    // Cleanup function: This runs when the component unmounts or dependencies change
+    return () => {
+      console.log(
+        '[useEffect-cleanup] Component unmounting or effect re-running. Cleaning up local stream.'
+      )
+      // Use the local 'currentMediaStream' if it was successfully set up in this effect run
+      // This is safer than relying on 'stream' from state, which might be updated by other effects
+      if (currentMediaStream) {
+        console.log(
+          'Cleaning up tracks from currentMediaStream:',
+          currentMediaStream
+        )
+        currentMediaStream.getTracks().forEach((track) => track.stop())
+        // setStream(null); // You might not need to set state here if component is unmounting
+      } else if (stream) {
+        // Fallback to state stream if local was not set
+        console.log('Cleaning up tracks from state stream:', stream)
+        stream.getTracks().forEach((track) => track.stop())
+        // setStream(null);
+      } else {
+        console.log('No stream found for cleanup.')
+      }
+      // If cleanupCall() destroys other things like peers, call it here:
+      // cleanupCall();
+    }
+  }, [sessionId, dispatch, navigate])
 
   // Effect for clearing video elements' srcObject when peers are destroyed/stream is null
   useEffect(() => {
@@ -395,6 +479,10 @@ const StudioPage = () => {
     console.log(`[Volume Test] Volume set to ${volume / 100}`)
   }, [volume])
 
+  const session = useSelector((state) => state.session.session)
+  const loading = useSelector((state) => state.session.loading)
+  const user = useSelector((state) => state.auth.user)
+
   const startRecording = () => {
     if (!stream) {
       console.warn('[startRecording] No stream available to record.')
@@ -454,7 +542,7 @@ const StudioPage = () => {
     // Toggle enabled state
     const newMutedState = !isAudioMuted
     audioTracks.forEach((track) => {
-      track.enabled = !newMutedState 
+      track.enabled = !newMutedState
     })
     setIsAudioMuted(newMutedState)
   }
@@ -474,7 +562,7 @@ const StudioPage = () => {
     // Toggle enabled state
     const newMutedState = !isVideoMuted
     videoTracks.forEach((track) => {
-      track.enabled = !newMutedState 
+      track.enabled = !newMutedState
     })
     setIsVideoMuted(newMutedState)
   }
@@ -482,10 +570,6 @@ const StudioPage = () => {
   const handleShareScreenToggle = () => {
     setIsShareScreenActive((prev) => !prev)
     console.log('Share screen toggled (UI only):', !isShareScreenActive)
-  }
-
-  const handleInviteClick = () => {
-    setShowDialog(true)
   }
 
   const handleEndCall = () => {
@@ -497,48 +581,52 @@ const StudioPage = () => {
   return (
     <div className='flex flex-col h-screen overflow-hidden bg-[#111111] text-white font-sans'>
       {/* Main Content Area: Two Columns */}
-
-      <div className='flex flex-1 overflow-hidden bg-[#111111]'>
-        {/* Left Column: Video Feeds and Controls */}
-        <div className='flex flex-col flex-1'>
-          <Header
-            participantCount={2}
-            onInviteClick={handleInviteClick}
-            userInitial='L' // This could be dynamic based on user login
-          />
-
-          <div className='flex flex-col flex-1'>
-            <UserVideos
-              roomFull={roomFull}
-              permissionDenied={permissionDenied}
-              stream={stream}
-              userVideo={userVideo}
-              peerVideo={peerVideo}
-              otherUserId={otherUserId}
-              showDialog={showDialog}
-              setShowDialog={setShowDialog}
-            />
-            {/* Bottom Control Bar */}
-            <VideoControls
-              isRecording={isRecording}
-              isAudioMuted={isAudioMuted}
-              isVideoMuted={isVideoMuted}
-              showSlider={showSlider}
-              volume={volume}
-              handleStartRecording={startRecording}
-              handleStopRecording={stopRecording}
-              setVolume={setVolume}
-              toggleSlider={toggleSlider}
-              handleAudioMuteToggle={handleAudioMuteToggle}
-              handleVideoMuteToggle={handleVideoMuteToggle}
-              handleShareScreenToggle={handleShareScreenToggle}
-              handleEndCall={handleEndCall}
-            />
-          </div>
+      {loading ? (
+        <div className='bg-[#1A1A1A] min-h-screen flex flex=col items-center justify-center text-white'>
+          <MoonLoader color='#8A65FD' size={60} />
+          <h3 className='text-md font-semibold mt-4'>Loading Studio</h3>
         </div>
+      ) : (
+        <div className='flex flex-1 overflow-hidden bg-[#111111]'>
+          {/* Left Column: Video Feeds and Controls */}
+          <div className='flex flex-col flex-1'>
+            <Header
+              title={session.title}
+              participantCount={2}
+              userInitial={user.name.substring(0, 1).toUpperCase()} // This could be dynamic based on user login
+            />
 
-        <RightPanel />
-      </div>
+            <div className='flex flex-col flex-1'>
+              <UserVideos
+                roomFull={roomFull}
+                permissionDenied={permissionDenied}
+                stream={stream}
+                userVideo={userVideo}
+                peerVideo={peerVideo}
+                otherUserId={otherUserId}
+              />
+              {/* Bottom Control Bar */}
+              <VideoControls
+                isRecording={isRecording}
+                isAudioMuted={isAudioMuted}
+                isVideoMuted={isVideoMuted}
+                showSlider={showSlider}
+                volume={volume}
+                handleStartRecording={startRecording}
+                handleStopRecording={stopRecording}
+                setVolume={setVolume}
+                toggleSlider={toggleSlider}
+                handleAudioMuteToggle={handleAudioMuteToggle}
+                handleVideoMuteToggle={handleVideoMuteToggle}
+                handleShareScreenToggle={handleShareScreenToggle}
+                handleEndCall={handleEndCall}
+              />
+            </div>
+          </div>
+
+          <RightPanel />
+        </div>
+      )}
     </div>
   )
 }

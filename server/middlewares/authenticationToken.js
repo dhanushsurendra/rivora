@@ -5,7 +5,6 @@ const User = require('../models/user')
 const authenticateToken = async (req, res, next) => {
   // Assume the JWT is stored in an httpOnly cookie named 'token'
   const token = req.cookies.token
-  console.log(token)
 
   if (!token) {
     // No token found in cookies, user is not authenticated

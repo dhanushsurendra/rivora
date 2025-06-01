@@ -36,12 +36,12 @@ const VideoControls = ({
       <div className='flex items-center space-x-2'>
         {/* dummy left side */}
         <button
-          className={`p-2 rounded-lg w-10 h-10 bg-gray-700 bg-transparent`}
+          className={`p-2 rounded-lg w-10 h-10 bg-gray-700`}
           title='Open Chat'
         ></button>
 
         <button
-          className={`p-2 rounded-lg
+          className={`
                 p-2 rounded-md w-10 h-10 bg-transparent`}
           title='Open Chat'
         ></button>

@@ -150,8 +150,8 @@ const CreateStudioPage = () => {
           body
         );
         console.log(response)
-        if (response.data.participantLink) {
-          setJoinLink(response.data.participantLink);
+        if (response.data.audienceLink) {
+          setJoinLink(response.data.audienceLink);
         }
         toast.success(response.data.message, { theme: 'dark' });
         setIsInviteSent(true); // Mark invite as sent

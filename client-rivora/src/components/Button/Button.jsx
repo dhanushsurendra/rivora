@@ -7,7 +7,6 @@ const Button = ({
   isDisabled = false,
   isLoading = false,
 }) => {
-  console.log(isDisabled)
   return (
     <button
       onClick={onClick}

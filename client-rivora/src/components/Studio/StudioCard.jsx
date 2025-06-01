@@ -21,7 +21,7 @@ const StudioCard = ({ studio }) => {
   // check if the session is happening right now
   const currentTime = new Date()
   const sessionStartTime = new Date(studio.scheduledAt)
-  const sessionEndTime = new Date(sessionStartTime.getTime() + 60 * 60 * 1000)
+  const sessionEndTime = new Date(sessionStartTime.getTime() + 60 * 60 * 1000 * 20)
 
   const isActuallyLive =
     studio.isLive ||

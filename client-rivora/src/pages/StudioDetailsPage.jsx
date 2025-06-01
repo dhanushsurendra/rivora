@@ -187,10 +187,11 @@ const StudioDetailsPage = () => {
         setError(null)
         const response = await axiosInstance.get(`/session/${sessionId}`)
         setStudio({
-          ...response.data.session,
-          videoClips: tempVideoClips,
-          transcript: dummyTranscript,
-          chatMessages: dummyChatMessages,
+            ...response.data.session,
+            hostToken: response.data.hostToken,
+            videoClips: tempVideoClips,
+            transcript: dummyTranscript,
+            chatMessages: dummyChatMessages,
         })
       } catch (err) {
         console.error('Error fetching studio details:', err)
@@ -284,7 +285,7 @@ const StudioDetailsPage = () => {
         { theme: 'dark', autoClose: 5000 }
       )
     } else {
-      navigate(`/device-setup/${sessionId}`)
+      navigate(`/device-setup/${studio.hostToken}`)
     }
   }
 
