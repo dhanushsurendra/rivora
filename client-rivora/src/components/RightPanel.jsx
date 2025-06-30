@@ -4,7 +4,7 @@ import { IoPersonSharp } from "react-icons/io5";
 
 const RightPanel = () => {
   return (
-    <aside className='w-80 bg-[#1A1A1A] flex flex-col p-4 space-y-6 overflow-y-auto'>
+    <aside className='w-80 bg-[#1A1A1A] h-screen flex flex-col p-4 space-y-6 overflow-y-auto'>
       {/* Right Sidebar */}
       {/* People Section */}
       <div className='flex flex-col space-y-4'>

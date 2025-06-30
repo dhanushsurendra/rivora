@@ -5,6 +5,8 @@ import { ToastContainer, toast } from 'react-toastify'
 import { useGoogleLogin } from '@react-oauth/google'
 import { FcGoogle } from 'react-icons/fc'
 import axiosInstance from '../api/axios'
+import Spinner from '../components/Spinner/Spinner'
+
 import {
   authStart,
   authSuccess,

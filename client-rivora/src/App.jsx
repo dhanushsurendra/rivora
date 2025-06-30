@@ -8,7 +8,6 @@ import store, { persistor } from './redux/store'
 import HomePage from './pages/HomePage.jsx'
 import LoginPage from './pages/LoginPage.jsx'
 import SignupPage from './pages/SignupPage.jsx'
-import StudioPage from './pages/StudioPage.jsx'
 import CreateSTudioPage from './pages/CreateStudioPage.jsx'
 import StudiosPage from './pages/StudioListPage.jsx'
 import NotFoundPage from './pages/NotFoundPage.jsx'
@@ -17,6 +16,7 @@ import PrivateRoute from './components/PrivateRoute.jsx'
 import RootLoader from './components/RootLoader.jsx'
 import StudioListPage from './pages/StudioListPage.jsx'
 import StudioDetailsPage from './pages/StudioDetailsPage.jsx'
+import StudioPageWrapper from './pages/StudioPageWrapper.jsx'
 
 const router = createBrowserRouter([
   {
@@ -29,7 +29,7 @@ const router = createBrowserRouter([
       {
         element: <PrivateRoute />,
         children: [
-          { path: 'studio/:sessionId', element: <StudioPage /> },
+          { path: 'studio/:sessionId', element: <StudioPageWrapper /> },
           { path: 'create-studio', element: <CreateSTudioPage /> },
           { path: 'device-setup/:token', element: <DeviceSetupPage /> },
           { path: 'studios', element: <StudiosPage /> },

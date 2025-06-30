@@ -9,6 +9,8 @@ import RecordButton from './Button/RecordButton'
 import VideoControlButton from './Button/VideoControlButton'
 import ChatToggleButton from './Chat/ChatToggleButton'
 
+import { useAVToggle } from "@100mslive/react-sdk";
+
 const VideoControls = ({
   isRecording,
   isAudioMuted,
@@ -31,12 +33,19 @@ const VideoControls = ({
     setIsChatWindowOpen(!isChatWindowOpen)
   }
 
+  const {
+    isLocalAudioEnabled,
+    isLocalVideoEnabled,
+    toggleAudio,
+    toggleVideo
+  } = useAVToggle();
+
   return (
     <footer className='flex justify-between px-6 py-3 bg-[#111111] z-10'>
       <div className='flex items-center space-x-2'>
         {/* dummy left side */}
         <button
-          className={`p-2 rounded-lg w-10 h-10 bg-gray-700`}
+          className={`p-2 rounded-lg w-10 h-10 bg-transparent`}
           title='Open Chat'
         ></button>
 
@@ -59,18 +68,18 @@ const VideoControls = ({
           iconOff={<IoMicOutline className='w-6 h-6' />}
           label='Mic'
           title='Toggle Audio'
-          onClick={handleAudioMuteToggle}
-          isToggled={isAudioMuted}
+          onClick={toggleAudio}
+          isToggled={!isLocalAudioEnabled}
         />
 
-        {/* Mute/Unmute Video Button */}
+        {/* Mute/Unmute Video But ton */}
         <VideoControlButton
           iconOn={<LuVideoOff className='w-6 h-6' />}
           iconOff={<IoVideocamOutline className='w-6 h-6' />}
           label='Cam'
           title='Toggle Video'
-          onClick={handleVideoMuteToggle}
-          isToggled={isVideoMuted}
+          onClick={toggleVideo}
+          isToggled={!isLocalVideoEnabled}
         />
 
         {/* Speaker Button */}
@@ -109,19 +118,7 @@ const VideoControls = ({
             isToggled={!(volume === 0)}
           />
         </div>
-        {/* Share Screen Button */}
-        <div className='flex flex-col items-center justify-center'>
-          <button
-            onClick={handleShareScreenToggle}
-            className={`p-1 w-10 h-10 bg-[#252525]
-                text-white hover:bg-opacity-80
-                cursor-pointer focus:outline-none focus:ring-2 rounded-xl flex items-center justify-center transition-colors duration-200`}
-            title='Share Screen'
-          >
-            <LuScreenShare className='w-5 h-5' />
-          </button>
-          <span className='text-xs mt-1 font-normal'>Share</span>
-        </div>
+        
         {/* End Call Button */}
         <div className='flex flex-col items-center justify-center'>
           <button
@@ -138,16 +135,6 @@ const VideoControls = ({
       <div className='flex items-center space-x-2'>
         {/* Chat Button */}
         <ChatToggleButton isOpen={isChatWindowOpen} handleChatToggle={handleChatToggle} />
-
-        {/* Audience */}
-        <button
-          onClick={() => {}}
-          className={`p-2 rounded-lg
-                 w-10 h-10 bg-[#252525] text-white cursor-pointer focus:outline-none focus:ring-2 flex items-center justify-center transition-all duration-200`}
-          title='Open Chat'
-        >
-          <GoPeople className='w-5 h-5 text-[#8A65FD]' />
-        </button>
       </div>
     </footer>
   )

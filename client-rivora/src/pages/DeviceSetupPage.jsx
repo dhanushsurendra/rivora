@@ -2,9 +2,9 @@ import { useState, useEffect, useRef } from 'react'
 import { Mic, Video, Volume2, Headphones, X, Check } from 'lucide-react'
 import { IoChevronBackSharp } from 'react-icons/io5'
 import { MdKeyboardArrowDown } from 'react-icons/md'
-import { useParams, useNavigate, useLocation } from 'react-router-dom' // Import hooks for routing
-import { toast, ToastContainer } from 'react-toastify' // Import toast for notifications
-import 'react-toastify/dist/ReactToastify.css' // Import toastify CSS
+import { useParams, useNavigate } from 'react-router-dom'
+import { toast, ToastContainer } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
 import { jwtDecode } from 'jwt-decode'
 
 const DeviceSetupPage = () => {
@@ -23,25 +23,20 @@ const DeviceSetupPage = () => {
   const [mediaAccessError, setMediaAccessError] = useState(null)
   const [role, setRole] = useState('')
   const [sessionId, setSessionId] = useState('')
-  // const frameCountRef = useRef(0); // Not currently used for displayed FPS
-  // const lastTimeRef = useRef(Date.now()); // Not currently used for displayed FPS
 
   // Helper function to format device labels
   const formatDeviceLabel = (label, maxLength = 30) => {
     if (!label) return ''
-    // Attempt to parse known camera/mic labels and shorten more gracefully
     const genericCameraMatch = label.match(
       /(usb camera|webcam|integrated camera|facetime hd camera|hd camera|camera|mic|microphone|audio input) #?\d?/i
     )
     if (genericCameraMatch) {
-      // For generic labels, try to keep it shorter
       const genericPart = genericCameraMatch[0]
       const remaining = label.replace(genericPart, '').trim()
       if (remaining.length > 10) {
-        // If there's significant unique info, add it
         return `${genericPart} ${remaining.substring(0, 30)}...`
       }
-      return label // Or just return the label if it's already short enough
+      return label
     }
 
     if (label.length > maxLength) {
@@ -50,8 +45,7 @@ const DeviceSetupPage = () => {
     return label
   }
 
-  // Function to get media devices and initialize stream
-  const getSpeakerForAudience = async () => {
+  const getAudioDevices = async () => {
     const devices = await navigator.mediaDevices.enumerateDevices()
     const audioOutput = devices.filter(
       (device) => device.kind === 'audiooutput'
@@ -61,13 +55,11 @@ const DeviceSetupPage = () => {
 
   const getMediaDevices = async () => {
     try {
-      if (role !== 'audience') {
-        const currentStream = await navigator.mediaDevices.getUserMedia({
-          video: true,
-          audio: true,
-        })
-        setStream(currentStream)
-      }
+      const currentStream = await navigator.mediaDevices.getUserMedia({
+        video: true,
+        audio: true,
+      })
+      setStream(currentStream)
 
       const devices = await navigator.mediaDevices.enumerateDevices()
       const audioInput = devices.filter(
@@ -84,12 +76,11 @@ const DeviceSetupPage = () => {
       setCameraDevices(videoInput)
       setSpeakerDevices(audioOutput)
 
-      // Set default selected devices
       if (audioInput.length > 0) setSelectedMic(audioInput[0].deviceId)
       if (videoInput.length > 0) setSelectedCamera(videoInput[0].deviceId)
       if (audioOutput.length > 0) setSelectedSpeaker(audioOutput[0].deviceId)
 
-      setMediaAccessError(null) // Clear any previous errors
+      setMediaAccessError(null)
     } catch (error) {
       console.error('Error accessing media devices:', error)
       if (
@@ -124,20 +115,14 @@ const DeviceSetupPage = () => {
     }
   }
 
-  // Effect to get media devices on component mount
   useEffect(() => {
     const { sessionId, role } = jwtDecode(token)
     setSessionId(sessionId)
     setRole(role)
 
-    if (role !== 'audience') {
-      getMediaDevices()
-    }
+    // getMediaDevices()
+    // getAudioDevices()
 
-    if (role == 'audience') {
-      getSpeakerForAudience()
-    }
-    // Cleanup stream on component unmount
     return () => {
       if (stream) {
         stream.getTracks().forEach((track) => track.stop())
@@ -146,109 +131,119 @@ const DeviceSetupPage = () => {
   }, [])
 
   // Effect to update video stream when selected camera or mic changes
-  useEffect(() => {
-    if (role != 'audience') {
-      const updateVideoStream = async () => {
-        if (!selectedCamera || !selectedMic) {
-          // Don't try to get stream if devices aren't selected yet
-          return
-        }
+  // useEffect(() => {
+  //   const updateVideoStream = async () => {
+  //     if (!selectedCamera || !selectedMic) {
+  //       return
+  //     }
 
-        try {
-          if (stream) {
-            stream.getTracks().forEach((track) => track.stop()) // Stop existing tracks
-          }
+  //     try {
+  //       if (stream) {
+  //         stream.getTracks().forEach((track) => track.stop())
+  //       }
 
-          const newStream = await navigator.mediaDevices.getUserMedia({
-            video: {
-              deviceId: { exact: selectedCamera },
-            },
-            audio: {
-              deviceId: { exact: selectedMic },
-            },
-          })
-          setStream(newStream)
-          if (videoRef.current) {
-            videoRef.current.srcObject = newStream
-          }
+  //       const newStream = await navigator.mediaDevices.getUserMedia({
+  //         video: {
+  //           deviceId: { exact: selectedCamera },
+  //         },
+  //         audio: {
+  //           deviceId: { exact: selectedMic },
+  //         },
+  //       })
+  //       setStream(newStream)
+  //       if (videoRef.current) {
+  //         videoRef.current.srcObject = newStream
+  //       }
 
-          setMediaAccessError(null) // Clear error if stream is successful
-        } catch (error) {
-          console.error('Error updating video stream:', error)
-          setMediaAccessError(
-            'Could not switch camera/mic. Please try again or check permissions.'
-          )
-          toast.error(
-            'Could not switch camera/mic. Please try again or check permissions.',
-            { theme: 'dark' }
-          )
-          // Stop any current stream and clear ref if an error occurs
-          if (stream) {
-            stream.getTracks().forEach((track) => track.stop())
-          }
-          setStream(null)
-          if (videoRef.current) {
-            videoRef.current.srcObject = null
-          }
-        }
-      }
+  //       setMediaAccessError(null)
+  //     } catch (error) {
+  //       console.error('Error updating video stream:', error)
+  //       setMediaAccessError(
+  //         'Could not switch camera/mic. Please try again or check permissions.'
+  //       )
+  //       toast.error(
+  //         'Could not switch camera/mic. Please try again or check permissions.',
+  //         { theme: 'dark' }
+  //       )
+  //       if (stream) {
+  //         stream.getTracks().forEach((track) => track.stop())
+  //       }
+  //       setStream(null)
+  //       if (videoRef.current) {
+  //         videoRef.current.srcObject = null
+  //       }
+  //     }
+  //   }
 
-      // Only update stream if devices are selected
-      if (selectedCamera && selectedMic) {
-        updateVideoStream()
-      }
-    }
-  }, [selectedCamera, selectedMic])
+  //   if (selectedCamera && selectedMic) {
+  //     updateVideoStream()
+  //   }
+  // }, [selectedCamera, selectedMic])
 
-  // Set video stream to video element once stream is available
   useEffect(() => {
     if (videoRef.current && stream) {
       videoRef.current.srcObject = stream
-      // You can re-enable requestAnimationFrame(measureFps) here if you need a real-time FPS counter
-      // videoRef.current.onplaying = () => { requestAnimationFrame(measureFps); };
     }
   }, [stream])
 
   const { token } = useParams()
 
-  const handleJoinStudio = () => {
-    // Basic validation before joining
+  const handleJoinStudio = async () => {
     if (!userName.trim()) {
       toast.error('Please enter your name.', { theme: 'dark' })
       return
     }
-    if (!selectedMic) {
-      toast.error('Please select a microphone.', { theme: 'dark' })
-      return
-    }
-    if (!selectedCamera) {
-      toast.error('Please select a camera.', { theme: 'dark' })
-      return
-    }
-    if (!selectedSpeaker) {
-      toast.error('Please select a speaker.', { theme: 'dark' })
-      return
-    }
-    if (mediaAccessError) {
-      toast.error(
-        'Cannot join due to device access errors. Please resolve them.',
-        { theme: 'dark' }
-      )
-      return
+    // if (!selectedMic) {
+    //   toast.error('Please select a microphone.', { theme: 'dark' })
+    //   return
+    // }
+    // if (!selectedCamera) {
+    //   toast.error('Please select a camera.', { theme: 'dark' })
+    //   return
+    // }
+    // if (!selectedSpeaker) {
+    //   toast.error('Please select a speaker.', { theme: 'dark' })
+    //   return
+    // }
+    // if (mediaAccessError) {
+    //   toast.error(
+    //     'Cannot join due to device access errors. Please resolve them.',
+    //     { theme: 'dark' }
+    //   )
+    //   return
+    // }
+
+    // Stop all media tracks and confirm shutdown
+    if (stream) {
+      stream.getTracks().forEach((track) => {
+        console.log(`🛑 Stopping ${track.kind} track: ${track.label}`)
+        track.stop()
+        track.enabled = false;
+        console.log(
+          `${track.kind} track stopped?`,
+          track.readyState === 'ended'
+        )
+      })
     }
 
-    // In a real application, this would navigate to the actual studio page
-    // and pass the device selections.
-    console.log('Joining studio with settings:', {
-      userName,
-      selectedMic,
-      selectedCamera,
-      selectedSpeaker,
-      isHeadphonesUsed,
-      sessionId, // Pass the role to the next page
+    // Detach video stream safely
+    if (videoRef.current) {
+      videoRef.current.pause()
+      videoRef.current.srcObject = null
+      videoRef.current.load()
+    }
+
+    // Wait a moment to ensure devices are released
+    await new Promise((resolve) => setTimeout(resolve, 300))
+
+    // Confirm device release in console
+    const devices = await navigator.mediaDevices.enumerateDevices()
+    console.log('📋 Devices after stopping media stream:')
+    devices.forEach((device) => {
+      console.log(`🔍 ${device.kind}: ${device.label}`)
     })
 
-    // Navigate to the studio page, passing state if needed
+    // Navigate
     navigate(`/studio/${sessionId}`, {
       state: { userName, role, selectedMic, selectedCamera, selectedSpeaker },
     })
@@ -298,11 +293,7 @@ const DeviceSetupPage = () => {
                   placeholder='Enter your name'
                 />
                 <span className='absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 bg-gray-700 px-3 py-1 rounded-md text-xs font-semibold'>
-                  {role === 'host'
-                    ? 'Host'
-                    : role == 'guest'
-                    ? 'Guest'
-                    : 'Audience'}
+                  {role === 'host' ? 'Host' : 'Guest'}
                 </span>
               </div>
             </div>
@@ -358,13 +349,13 @@ const DeviceSetupPage = () => {
             {/* Join Studio Button */}
             <button
               onClick={handleJoinStudio}
-              disabled={
-                mediaAccessError ||
-                !userName.trim() ||
-                !selectedMic ||
-                !selectedCamera ||
-                !selectedSpeaker
-              }
+              // disabled={
+              //   mediaAccessError ||
+              //   !userName.trim() ||
+              //   !selectedMic ||
+              //   !selectedCamera ||
+              //   !selectedSpeaker
+              // }
               className={`w-full bg-[#8A65FD] text-white text-lg font-semibold py-3 cursor-pointer rounded-lg transition-colors duration-200 shadow-lg
                 ${
                   mediaAccessError ||
@@ -392,7 +383,7 @@ const DeviceSetupPage = () => {
               <div className='absolute inset-0 flex items-center justify-center text-red-400 text-center p-4 bg-gray-900/80 rounded-xl'>
                 {mediaAccessError}
               </div>
-            ) : selectedCamera && stream && role !== 'audience' ? (
+            ) : selectedCamera && stream ? (
               <video
                 ref={videoRef}
                 autoPlay
@@ -406,7 +397,7 @@ const DeviceSetupPage = () => {
                 <Video size={48} className='mx-auto mt-4 text-gray-600' />
               </div>
             )}
-            {selectedCamera && stream && role !== 'audience' && (
+            {selectedCamera && stream && (
               <>
                 <div className='absolute bottom-4 left-4 bg-black/60 text-white text-sm px-3 py-1 rounded-full flex items-center'>
                   <span className='mr-2'>{userName || 'Your Name'}</span>
@@ -420,86 +411,81 @@ const DeviceSetupPage = () => {
 
           {/* Device Selection Dropdowns */}
           <div className='w-full mt-8 space-y-4'>
-            {/* Microphone */}
-            {role !== 'audience' && (
-              <div className='flex items-center bg-[#1E1E1E] rounded-lg p-3 border border-gray-700'>
-                <Mic size={20} className='text-white mr-4 flex-shrink-0' />
-                <select
-                  value={selectedMic}
-                  onChange={(e) => setSelectedMic(e.target.value)}
-                  className='flex-grow min-w-0 bg-transparent text-white focus:outline-none cursor-pointer appearance-none pr-3 text-base overflow-hidden whitespace-nowrap text-ellipsis'
-                  title={
-                    micDevices.find((d) => d.deviceId === selectedMic)?.label ||
-                    'No microphone selected'
-                  }
-                >
-                  {micDevices.length > 0 ? (
-                    micDevices.map((device) => (
-                      <option
-                        key={device.deviceId}
-                        value={device.deviceId}
-                        className='bg-gray-800 text-white' // No text-ellipsis here as it's not well supported by browsers for options
-                        title={device.label}
-                      >
-                        {formatDeviceLabel(
-                          device.label ||
-                            `Microphone ${device.deviceId.substring(0, 8)}`,
-                          50
-                        )}
-                      </option>
-                    ))
-                  ) : (
-                    <option className='bg-gray-800 text-gray-400'>
-                      No microphones found
+            <div className='flex items-center bg-[#1E1E1E] rounded-lg p-3 border border-gray-700'>
+              <Mic size={20} className='text-white mr-4 flex-shrink-0' />
+              <select
+                value={selectedMic}
+                onChange={(e) => setSelectedMic(e.target.value)}
+                className='flex-grow min-w-0 bg-transparent text-white focus:outline-none cursor-pointer appearance-none pr-3 text-base overflow-hidden whitespace-nowrap text-ellipsis'
+                title={
+                  micDevices.find((d) => d.deviceId === selectedMic)?.label ||
+                  'No microphone selected'
+                }
+              >
+                {micDevices.length > 0 ? (
+                  micDevices.map((device) => (
+                    <option
+                      key={device.deviceId}
+                      value={device.deviceId}
+                      className='bg-gray-800 text-white' // No text-ellipsis here as it's not well supported by browsers for options
+                      title={device.label}
+                    >
+                      {formatDeviceLabel(
+                        device.label ||
+                          `Microphone ${device.deviceId.substring(0, 8)}`,
+                        50
+                      )}
                     </option>
-                  )}
-                </select>
-                <div className='flex-shrink-0 text-gray-400 ml-2'>
-                  <MdKeyboardArrowDown size={20} />
-                </div>
+                  ))
+                ) : (
+                  <option className='bg-gray-800 text-gray-400'>
+                    No microphones found
+                  </option>
+                )}
+              </select>
+              <div className='flex-shrink-0 text-gray-400 ml-2'>
+                <MdKeyboardArrowDown size={20} />
               </div>
-            )}
+            </div>
 
             {/* Camera */}
-            {role !== 'audience' && (
-              <div className='flex items-center bg-[#1E1E1E] rounded-lg p-3 border border-gray-700'>
-                <Video size={20} className='text-white mr-4 flex-shrink-0' />
-                <select
-                  disabled={role === 'audience'}
-                  value={selectedCamera}
-                  onChange={(e) => setSelectedCamera(e.target.value)}
-                  className='flex-grow min-w-0 bg-transparent text-white focus:outline-none cursor-pointer appearance-none pr-3 text-base overflow-hidden whitespace-nowrap text-ellipsis'
-                  title={
-                    cameraDevices.find((d) => d.deviceId === selectedCamera)
-                      ?.label || 'No camera selected'
-                  }
-                >
-                  {cameraDevices.length > 0 ? (
-                    cameraDevices.map((device) => (
-                      <option
-                        key={device.deviceId}
-                        value={device.deviceId}
-                        className='bg-gray-800 text-white' // No text-ellipsis here
-                        title={device.label}
-                      >
-                        {formatDeviceLabel(
-                          device.label ||
-                            `Camera ${device.deviceId.substring(0, 50)}`,
-                          50
-                        )}
-                      </option>
-                    ))
-                  ) : (
-                    <option className='bg-gray-800 text-gray-400'>
-                      No cameras found
+
+            <div className='flex items-center bg-[#1E1E1E] rounded-lg p-3 border border-gray-700'>
+              <Video size={20} className='text-white mr-4 flex-shrink-0' />
+              <select
+                value={selectedCamera}
+                onChange={(e) => setSelectedCamera(e.target.value)}
+                className='flex-grow min-w-0 bg-transparent text-white focus:outline-none cursor-pointer appearance-none pr-3 text-base overflow-hidden whitespace-nowrap text-ellipsis'
+                title={
+                  cameraDevices.find((d) => d.deviceId === selectedCamera)
+                    ?.label || 'No camera selected'
+                }
+              >
+                {cameraDevices.length > 0 ? (
+                  cameraDevices.map((device) => (
+                    <option
+                      key={device.deviceId}
+                      value={device.deviceId}
+                      className='bg-gray-800 text-white' // No text-ellipsis here
+                      title={device.label}
+                    >
+                      {formatDeviceLabel(
+                        device.label ||
+                          `Camera ${device.deviceId.substring(0, 50)}`,
+                        50
+                      )}
                     </option>
-                  )}
-                </select>
-                <div className='flex-shrink-0 text-gray-400 ml-2'>
-                  <MdKeyboardArrowDown size={20} />
-                </div>
+                  ))
+                ) : (
+                  <option className='bg-gray-800 text-gray-400'>
+                    No cameras found
+                  </option>
+                )}
+              </select>
+              <div className='flex-shrink-0 text-gray-400 ml-2'>
+                <MdKeyboardArrowDown size={20} />
               </div>
-            )}
+            </div>
             {/* Speaker */}
             <div className='flex items-center bg-[#1E1E1E] rounded-lg p-3 border border-gray-700'>
               <Volume2 size={20} className='text-white mr-4 flex-shrink-0' />
