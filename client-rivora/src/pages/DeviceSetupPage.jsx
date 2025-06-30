@@ -120,8 +120,8 @@ const DeviceSetupPage = () => {
     setSessionId(sessionId)
     setRole(role)
 
-    // getMediaDevices()
-    // getAudioDevices()
+    getMediaDevices()
+    getAudioDevices()
 
     return () => {
       if (stream) {
@@ -131,54 +131,54 @@ const DeviceSetupPage = () => {
   }, [])
 
   // Effect to update video stream when selected camera or mic changes
-  // useEffect(() => {
-  //   const updateVideoStream = async () => {
-  //     if (!selectedCamera || !selectedMic) {
-  //       return
-  //     }
+  useEffect(() => {
+    const updateVideoStream = async () => {
+      if (!selectedCamera || !selectedMic) {
+        return
+      }
 
-  //     try {
-  //       if (stream) {
-  //         stream.getTracks().forEach((track) => track.stop())
-  //       }
+      try {
+        if (stream) {
+          stream.getTracks().forEach((track) => track.stop())
+        }
 
-  //       const newStream = await navigator.mediaDevices.getUserMedia({
-  //         video: {
-  //           deviceId: { exact: selectedCamera },
-  //         },
-  //         audio: {
-  //           deviceId: { exact: selectedMic },
-  //         },
-  //       })
-  //       setStream(newStream)
-  //       if (videoRef.current) {
-  //         videoRef.current.srcObject = newStream
-  //       }
+        const newStream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            deviceId: { exact: selectedCamera },
+          },
+          audio: {
+            deviceId: { exact: selectedMic },
+          },
+        })
+        setStream(newStream)
+        if (videoRef.current) {
+          videoRef.current.srcObject = newStream
+        }
 
-  //       setMediaAccessError(null)
-  //     } catch (error) {
-  //       console.error('Error updating video stream:', error)
-  //       setMediaAccessError(
-  //         'Could not switch camera/mic. Please try again or check permissions.'
-  //       )
-  //       toast.error(
-  //         'Could not switch camera/mic. Please try again or check permissions.',
-  //         { theme: 'dark' }
-  //       )
-  //       if (stream) {
-  //         stream.getTracks().forEach((track) => track.stop())
-  //       }
-  //       setStream(null)
-  //       if (videoRef.current) {
-  //         videoRef.current.srcObject = null
-  //       }
-  //     }
-  //   }
+        setMediaAccessError(null)
+      } catch (error) {
+        console.error('Error updating video stream:', error)
+        setMediaAccessError(
+          'Could not switch camera/mic. Please try again or check permissions.'
+        )
+        toast.error(
+          'Could not switch camera/mic. Please try again or check permissions.',
+          { theme: 'dark' }
+        )
+        if (stream) {
+          stream.getTracks().forEach((track) => track.stop())
+        }
+        setStream(null)
+        if (videoRef.current) {
+          videoRef.current.srcObject = null
+        }
+      }
+    }
 
-  //   if (selectedCamera && selectedMic) {
-  //     updateVideoStream()
-  //   }
-  // }, [selectedCamera, selectedMic])
+    if (selectedCamera && selectedMic) {
+      updateVideoStream()
+    }
+  }, [selectedCamera, selectedMic])
 
   useEffect(() => {
     if (videoRef.current && stream) {
@@ -193,25 +193,25 @@ const DeviceSetupPage = () => {
       toast.error('Please enter your name.', { theme: 'dark' })
       return
     }
-    // if (!selectedMic) {
-    //   toast.error('Please select a microphone.', { theme: 'dark' })
-    //   return
-    // }
-    // if (!selectedCamera) {
-    //   toast.error('Please select a camera.', { theme: 'dark' })
-    //   return
-    // }
-    // if (!selectedSpeaker) {
-    //   toast.error('Please select a speaker.', { theme: 'dark' })
-    //   return
-    // }
-    // if (mediaAccessError) {
-    //   toast.error(
-    //     'Cannot join due to device access errors. Please resolve them.',
-    //     { theme: 'dark' }
-    //   )
-    //   return
-    // }
+    if (!selectedMic) {
+      toast.error('Please select a microphone.', { theme: 'dark' })
+      return
+    }
+    if (!selectedCamera) {
+      toast.error('Please select a camera.', { theme: 'dark' })
+      return
+    }
+    if (!selectedSpeaker) {
+      toast.error('Please select a speaker.', { theme: 'dark' })
+      return
+    }
+    if (mediaAccessError) {
+      toast.error(
+        'Cannot join due to device access errors. Please resolve them.',
+        { theme: 'dark' }
+      )
+      return
+    }
 
     // Stop all media tracks and confirm shutdown
     if (stream) {
@@ -250,7 +250,7 @@ const DeviceSetupPage = () => {
   }
 
   return (
-    <div className='min-h-screen bg-[#1A1A1A] text-white font-inter flex flex-col items-center justify-center p-4 sm:p-6'>
+    <div className='min-h-screen bg-[#111111] text-white font-inter flex flex-col items-center justify-center p-4 sm:p-6'>
       <div className='max-w-6xl w-full rounded-xl flex flex-col lg:flex-row bg-[#1A1A1A] overflow-hidden'>
         {/* Left Column */}
         <div className='flex-1 p-6 sm:p-10 flex flex-col justify-between'>
@@ -349,13 +349,13 @@ const DeviceSetupPage = () => {
             {/* Join Studio Button */}
             <button
               onClick={handleJoinStudio}
-              // disabled={
-              //   mediaAccessError ||
-              //   !userName.trim() ||
-              //   !selectedMic ||
-              //   !selectedCamera ||
-              //   !selectedSpeaker
-              // }
+              disabled={
+                mediaAccessError ||
+                !userName.trim() ||
+                !selectedMic ||
+                !selectedCamera ||
+                !selectedSpeaker
+              }
               className={`w-full bg-[#8A65FD] text-white text-lg font-semibold py-3 cursor-pointer rounded-lg transition-colors duration-200 shadow-lg
                 ${
                   mediaAccessError ||
@@ -377,7 +377,7 @@ const DeviceSetupPage = () => {
         </div>
 
         {/* Right Column - Camera Feed & Device Settings */}
-        <div className='flex-1 p-6 sm:p-10 flex flex-col bg-[#252525] rounded-xl items-center justify-center relative shadow-lg'>
+        <div className='flex-1 p-6 sm:p-10 flex flex-col bg-[#1A1A1A] rounded-xl items-center justify-center relative'>
           <div className='w-full max-w-lg h-64 sm:h-80 lg:h-96 rounded-xl overflow-hidden relative shadow-xl bg-gray-800 flex items-center justify-center'>
             {mediaAccessError ? (
               <div className='absolute inset-0 flex items-center justify-center text-red-400 text-center p-4 bg-gray-900/80 rounded-xl'>
@@ -427,7 +427,7 @@ const DeviceSetupPage = () => {
                     <option
                       key={device.deviceId}
                       value={device.deviceId}
-                      className='bg-gray-800 text-white' // No text-ellipsis here as it's not well supported by browsers for options
+                      className='bg-gray-800 text-white' 
                       title={device.label}
                     >
                       {formatDeviceLabel(

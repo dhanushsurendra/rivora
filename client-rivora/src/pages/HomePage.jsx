@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Link as RouterLink } from 'react-router-dom'
+import { Link, Link as RouterLink } from 'react-router-dom'
 import {
   Sparkles,
   ExternalLink,
@@ -35,7 +35,7 @@ Button.displayName = 'Button'
 const Card = React.forwardRef(({ className, children, ...props }, ref) => (
   <div
     ref={ref}
-    className={`rounded-lg border border-gray-700 bg-[#1F1F1F] text-white shadow-sm ${
+    className={`rounded-lg border border-gray-700 bg-[#1A1A1A] text-white shadow-sm ${
       className || ''
     }`}
     {...props}
@@ -106,14 +106,11 @@ const HomePage = () => {
           headerBg ? 'bg-black/10 shadow-lg backdrop-blur-sm' : 'bg-transparent'
         }`}
       >
-        {/* Modified this div's classes */}
         <div className='max-w-7xl mx-auto flex items-center justify-center relative'>
-          {/* H1 for branding, positioned to the left */}
-          <h1 className='text-xl font-semibold tracking-wide text-[#8A65FD] absolute left-0'>
+          <Link to={'/'} className='text-xl font-semibold tracking-wide text-[#8A65FD] absolute left-0'>
             Rivora
-          </h1>
+          </Link>
 
-          {/* Navigation links, now centered */}
           <nav className='hidden md:flex space-x-6 text-gray-300 font-medium'>
             <a
               href='#features'
@@ -187,9 +184,9 @@ const HomePage = () => {
               anywhere. Perfect for podcasts, interviews, and collaboration.
             </p>
             <div className='flex gap-4 justify-center md:justify-start'>
-              <Button className='bg-[#8A65FD] text-white cursor-pointer px-6 py-3 rounded-lg font-medium text-sm hover:bg-[#724EE0]'>
+              <Link to={'/create-studio'} className='bg-[#8A65FD] text-white cursor-pointer px-6 py-3 rounded-lg font-medium text-sm hover:bg-[#724EE0]'>
                 Get Started
-              </Button>
+              </Link>
             </div>
           </div>
         </div>
@@ -243,7 +240,7 @@ const HomePage = () => {
                 Separate Tracks
               </h3>
               <p className='text-gray-400'>
-                Download separate audio and video files for each participant.
+                Download video files for each participant.
               </p>
             </CardContent>
           </Card>
@@ -251,7 +248,7 @@ const HomePage = () => {
       </section>
 
       {/* How it works Section */}
-      <section id='how-it-works' className='px-6 py-20 bg-[#1F1F1F]'>
+      <section id='how-it-works' className='px-6 py-20 bg-[#1A1A1A]'>
         <h2 className='text-3xl font-bold text-center mb-12 text-white'>
           How It Works
         </h2>
@@ -439,7 +436,7 @@ const HomePage = () => {
         </div>
       </section>
       {/* Footer */}
-      <footer id='footer' className='bg-gray-800 text-white py-10 px-6 mt-auto'>
+      <footer id='footer' className='bg-[#1A1A1A] text-white py-10 px-6 mt-auto'>
         <div className='max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6'>
           <div className='text-lg'>© 2025 Rivora. All rights reserved.</div>
           <nav className='space-x-6 text-gray-400 text-sm'>

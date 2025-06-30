@@ -96,17 +96,17 @@ const StudioDetailsPage = () => {
     {
       id: 'v1',
       url: 'https://www.w3schools.com/html/mov_bbb.mp4',
-      title: 'Session Highlights Part 1',
+      title: 'Host Recording (Short)',
     },
     {
       id: 'v2',
       url: 'https://www.w3schools.com/html/movie.mp4',
-      title: 'Session Highlights Part 2 (Short)',
+      title: 'Guest Recording (Short)',
     },
     {
       id: 'v3',
       url: 'https://www.w3schools.com/html/mov_bbb.mp4',
-      title: 'Full Recording (Example)',
+      title: 'Full Recording (Long)',
     },
   ]
 
@@ -187,11 +187,10 @@ const StudioDetailsPage = () => {
         setError(null)
         const response = await axiosInstance.get(`/session/${sessionId}`)
         setStudio({
-            ...response.data.session,
-            hostToken: response.data.hostToken,
-            videoClips: tempVideoClips,
-            transcript: dummyTranscript,
-            chatMessages: dummyChatMessages,
+          ...response.data.session,
+          hostToken: response.data.hostToken,
+          videoClips: tempVideoClips,
+          chatMessages: dummyChatMessages,
         })
       } catch (err) {
         console.error('Error fetching studio details:', err)
@@ -290,7 +289,7 @@ const StudioDetailsPage = () => {
   }
 
   return (
-    <div className='bg-[#1A1A1A] min-h-screen text-white font-sans'>
+    <div className='bg-[#111111] min-h-screen text-white font-sans'>
       <Header />
 
       <main className='max-w-7xl mx-auto px-4 py-8'>
@@ -306,7 +305,7 @@ const StudioDetailsPage = () => {
         </div>
 
         {/* Session Overview Section */}
-        <div className='bg-[#252525] rounded-lg p-6 mb-8 shadow-xl border border-[#333333]'>
+        <div className='bg-[#1A1A1A] rounded-lg p-6 mb-8 shadow-xl border border-[#333333]'>
           <h2 className='text-2xl font-bold text-white mb-6'>
             Session Overview
           </h2>
@@ -430,11 +429,26 @@ const StudioDetailsPage = () => {
             {studio.videoClips && studio.videoClips.length > 0 ? (
               <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
                 {studio.videoClips.map((clip) => (
-                  <VideoPlayer
-                    key={clip.id}
-                    src={clip.url}
-                    title={clip.title}
-                  />
+                  <div key={clip.id} className='flex flex-col space-y-2'>
+                    <div className='w-full aspect-video bg-black rounded-lg overflow-hidden'>
+                      <VideoPlayer
+                        src={clip.url}
+                        title={clip.title}
+                        className='w-full h-full object-cover'
+                      />
+                    </div>
+                    <Button
+                      text={
+                        clip.id === 'v1'
+                          ? 'Download Host Recording'
+                          : clip.id === 'v2'
+                          ? 'Download Guest Recording'
+                          : 'Download Full Recording'
+                      }
+                      className='bg-blue-600 hover:bg-blue-700'
+                      onClick={() => window.open(clip.url, '_blank')}
+                    />
+                  </div>
                 ))}
               </div>
             ) : (
@@ -442,50 +456,8 @@ const StudioDetailsPage = () => {
                 No video recordings or clips available for this session yet.
               </p>
             )}
-
-            <h3 className='text-xl font-semibold text-white mt-8 mb-4 border-b border-[#333333] pb-2'>
-              Transcript
-            </h3>
-            {studio.transcript ? (
-              <div className='bg-[#1E1E1E] p-4 rounded-md text-gray-300 leading-relaxed shadow-inner max-h-64 overflow-y-auto'>
-                <p>{studio.transcript}</p>
-              </div>
-            ) : (
-              <p className='text-gray-400'>Transcript not available yet.</p>
-            )}
-
-            <h3 className='text-xl font-semibold text-white mt-8 mb-4 border-b border-[#333333] pb-2'>
-              Downloads
-            </h3>
-            <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-              <Button
-                text='Download Full Recording (MP4)'
-                className='bg-blue-600 hover:bg-blue-700'
-              />
-              <Button
-                text='Download Audio Only (MP3)'
-                className='bg-blue-600 hover:bg-blue-700'
-              />
-              <Button
-                text='Download Chat Transcript (TXT)'
-                className='bg-blue-600 hover:bg-blue-700'
-              />
-            </div>
           </div>
         )}
-
-        <div className='bg-[#252525] rounded-lg p-6 my-8 shadow-xl border border-[#333333]'>
-          <h2 className='text-2xl font-bold text-white mb-6'>Session Chat</h2>
-          <div className='bg-[#1E1E1E] p-4 rounded-lg h-80 overflow-y-auto border border-[#2e2e2e]'>
-            {studio.chatMessages && studio.chatMessages.length > 0 ? (
-              studio.chatMessages.map((msg, index) => (
-                <ChatMessage key={index} {...msg} />
-              ))
-            ) : (
-              <p className='text-gray-500'>No chat messages available yet.</p>
-            )}
-          </div>
-        </div>
       </main>
       <ToastContainer />
     </div>

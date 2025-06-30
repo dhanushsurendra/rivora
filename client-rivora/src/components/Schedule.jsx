@@ -32,7 +32,6 @@ const Schedule = ({ canEdit, scheduledDetails, onSubmit }) => {
   const handleRemoveSchedule = () => {
     // Reset the scheduled state
     setIsScheduled(false)
-    setScheduledDetails(null)
     console.log('Schedule removed.')
   }
 
@@ -92,7 +91,7 @@ const Schedule = ({ canEdit, scheduledDetails, onSubmit }) => {
   }
 
   return (
-    <div className='bg-[#252525] space-y-4 rounded-lg'>
+    <div className='space-y-4 rounded-lg'>
       <h3 className='text-md font-medium text-white'>Schedule Studio</h3>
       <p className='text-xs text-gray-400'>
         Mark this studio as scheduled to let others know when you will be
@@ -119,7 +118,7 @@ const Schedule = ({ canEdit, scheduledDetails, onSubmit }) => {
               {scheduledDetails.timezone}
             </span>
           </div>
-          {!canEdit &&
+          {canEdit &&
           <div className='flex gap-2'>
             <Button
               text={'Edit'}

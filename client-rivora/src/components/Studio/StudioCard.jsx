@@ -21,7 +21,7 @@ const StudioCard = ({ studio }) => {
   // check if the session is happening right now
   const currentTime = new Date()
   const sessionStartTime = new Date(studio.scheduledAt)
-  const sessionEndTime = new Date(sessionStartTime.getTime() + 60 * 60 * 1000 * 20)
+  const sessionEndTime = new Date(sessionStartTime.getTime() + 60 * 60 * 1000)
 
   const isActuallyLive =
     studio.isLive ||
@@ -32,7 +32,7 @@ const StudioCard = ({ studio }) => {
   return (
     <div
       className='
-        bg-[#252525] rounded-lg p-6
+        bg-[#1A1A1A] rounded-lg p-6
         cursor-pointer
         relative 
         border border-transparent transparent
@@ -53,7 +53,6 @@ const StudioCard = ({ studio }) => {
           bg-green-600 text-white
           text-xs font-semibold px-3 py-1 rounded-full
           flex items-center gap-1
-          shadow-lg shadow-green-500/20
         '
         >
           <span className='h-2 w-2 rounded-full bg-white animate-pulse-slow'></span>{' '}
@@ -77,7 +76,6 @@ const StudioCard = ({ studio }) => {
           absolute top-4 right-4
           bg-[#8A65FD] text-white
           text-xs font-semibold px-3 py-1 rounded-full
-          shadow-lg shadow-[#8A65FD]/20
         '
         >
           Upcoming
