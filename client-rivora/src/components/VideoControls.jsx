@@ -12,6 +12,7 @@ import ChatToggleButton from './Chat/ChatToggleButton'
 import { useAVToggle } from "@100mslive/react-sdk";
 
 const VideoControls = ({
+  userRole,
   isRecording,
   isAudioMuted,
   isVideoMuted,

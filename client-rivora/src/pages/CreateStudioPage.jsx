@@ -229,7 +229,7 @@ const CreateStudioPage = () => {
         )}
 
         {/* NEW: Go to Studio Details Button */}
-        {sessionId && hasCurrentStudioBeenCreated && (
+        {sessionId && hasCurrentStudioBeenCreated && isInviteSent && (
           <div className='bg-[#1A1A1A] p-6 rounded-lg my-6 text-center'>
             <h3 className='text-md font-medium text-white mb-4'>
               Your studio is ready!

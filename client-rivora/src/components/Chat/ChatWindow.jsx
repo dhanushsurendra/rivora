@@ -31,26 +31,36 @@ const ChatPanel = ({ isOpen, handleChatToggle }) => {
   }, [])
 
   // Convert HMS messages to readable format
-  const liveMessages = hmsMessages.map((msg) => {
-    let parsedText = msg.message
-    try {
-      const data = JSON.parse(msg.message)
-      if (data.text) parsedText = data.text
-    } catch (e) {
-      console.warn('Non-JSON message:', msg.message)
-    }
+  const liveMessages = hmsMessages
+    .filter((msg) => {
+      try {
+        const data = JSON.parse(msg.message)
+        return !data.type || data.text
+      } catch {
+        return true
+      }
+    })
+    .map((msg) => {
+      let parsedText = msg.message
+      console.log(parsedText)
+      try {
+        const data = JSON.parse(msg.message)
+        if (data.text) parsedText = data.text
+      } catch (e) {
+        console.warn('Non-JSON message:', msg.message)
+      }
 
-    return {
-      id: msg.id,
-      sender: msg.senderRole,
-      text: parsedText,
-      timestamp: new Date(msg.time).toLocaleTimeString([], {
-        hour: '2-digit',
-        minute: '2-digit',
-      }),
-      isLocal: msg.sender === localPeer?.id,
-    }
-  })
+      return {
+        id: msg.id,
+        sender: msg.senderRole,
+        text: parsedText,
+        timestamp: new Date(msg.time).toLocaleTimeString([], {
+          hour: '2-digit',
+          minute: '2-digit',
+        }),
+        isLocal: msg.sender === localPeer?.id,
+      }
+    })
 
   // Merge stored and live messages
   const allMessages = [
@@ -107,7 +117,10 @@ const ChatPanel = ({ isOpen, handleChatToggle }) => {
       {/* Header */}
       <div className='flex justify-between items-center px-4 py-3 border-b border-gray-700'>
         <h3 className='text-lg font-semibold'>Chat</h3>
-        <button onClick={handleChatToggle} className='text-gray-400 hover:text-white'>
+        <button
+          onClick={handleChatToggle}
+          className='text-gray-400 hover:text-white'
+        >
           <GoX className='w-6 h-6' />
         </button>
       </div>
@@ -115,17 +128,24 @@ const ChatPanel = ({ isOpen, handleChatToggle }) => {
       {/* Messages */}
       <div className='flex-1 p-4 overflow-y-auto custom-scrollbar'>
         {allMessages.map((msg) => (
-          <div key={msg.id} className={`mb-3 ${msg.isLocal ? 'text-right' : 'text-left'}`}>
+          <div
+            key={msg.id}
+            className={`mb-3 ${msg.isLocal ? 'text-right' : 'text-left'}`}
+          >
             <div
               className={`inline-block p-2 rounded-lg ${
                 msg.isLocal ? 'bg-[#8A65FD]' : 'bg-[#2E2E2E]'
               }`}
             >
               <p className='text-sm font-semibold'>
-                {msg.isLocal ? 'You' : msg.sender.charAt(0).toUpperCase() + msg.sender.slice(1)}
+                {msg.isLocal
+                  ? 'You'
+                  : msg.sender.charAt(0).toUpperCase() + msg.sender.slice(1)}
               </p>
               <p className='text-md'>{msg.text}</p>
-              <span className='text-xs text-gray-400 block mt-1'>{msg.timestamp}</span>
+              <span className='text-xs text-gray-400 block mt-1'>
+                {msg.timestamp}
+              </span>
             </div>
           </div>
         ))}

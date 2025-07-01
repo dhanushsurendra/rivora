@@ -6,6 +6,8 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { toast, ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import { jwtDecode } from 'jwt-decode'
+import { useDispatch } from 'react-redux'
+import { setStudioJoinData } from '../redux/studio/studioSlice'
 
 const DeviceSetupPage = () => {
   const navigate = useNavigate()
@@ -23,6 +25,7 @@ const DeviceSetupPage = () => {
   const [mediaAccessError, setMediaAccessError] = useState(null)
   const [role, setRole] = useState('')
   const [sessionId, setSessionId] = useState('')
+  const dispatch = useDispatch()
 
   // Helper function to format device labels
   const formatDeviceLabel = (label, maxLength = 30) => {
@@ -218,7 +221,7 @@ const DeviceSetupPage = () => {
       stream.getTracks().forEach((track) => {
         console.log(`🛑 Stopping ${track.kind} track: ${track.label}`)
         track.stop()
-        track.enabled = false;
+        track.enabled = false
         console.log(
           `${track.kind} track stopped?`,
           track.readyState === 'ended'
@@ -236,17 +239,18 @@ const DeviceSetupPage = () => {
     // Wait a moment to ensure devices are released
     await new Promise((resolve) => setTimeout(resolve, 300))
 
-    // Confirm device release in console
-    const devices = await navigator.mediaDevices.enumerateDevices()
-    console.log('📋 Devices after stopping media stream:')
-    devices.forEach((device) => {
-      console.log(`🔍 ${device.kind}: ${device.label}`)
-    })
+    const studioJoinData = {
+      userName,
+      role,
+      selectedMic,
+      selectedCamera,
+      selectedSpeaker,
+    }
+
+    dispatch(setStudioJoinData(studioJoinData))
 
     // Navigate
-    navigate(`/studio/${sessionId}`, {
-      state: { userName, role, selectedMic, selectedCamera, selectedSpeaker },
-    })
+    navigate(`/studio/${sessionId}`)
   }
 
   return (
@@ -427,7 +431,7 @@ const DeviceSetupPage = () => {
                     <option
                       key={device.deviceId}
                       value={device.deviceId}
-                      className='bg-gray-800 text-white' 
+                      className='bg-gray-800 text-white'
                       title={device.label}
                     >
                       {formatDeviceLabel(

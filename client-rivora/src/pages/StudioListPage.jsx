@@ -77,7 +77,7 @@ const StudioListPage = () => {
             <MoonLoader color='#8A65FD' size={50} />
           </div>
         )}
-        {error && <p className='text-center text-red-500'>Error: {error}</p>}
+        {error && <p className='text-center text-white'>{error}</p>}
         {!loading && studios.length === 0 && !error && (
           <p className='text-center text-gray-400'>No studios created yet.</p>
         )}

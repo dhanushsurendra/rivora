@@ -87,6 +87,7 @@ const HomePage = () => {
 
       removeUserFromLocalStorage()
       dispatch(logout())
+      dispatch({ type: 'RESET_STORE' }) 
 
       toast.success('Logout successful!', { theme: 'dark' })
 

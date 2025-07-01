@@ -1,9 +1,11 @@
-import { configureStore } from '@reduxjs/toolkit'
+// src/store.js
+import { configureStore, combineReducers } from '@reduxjs/toolkit'
 import authReducer from './auth/authSlice'
 import sessionReducer from './session/sessionSlice'
+import studioReducer from './studio/studioSlice'
+
 import storage from 'redux-persist/lib/storage'
 import { persistReducer, persistStore } from 'redux-persist'
-import { combineReducers } from 'redux'
 import logger from 'redux-logger'
 
 const persistConfig = {
@@ -11,18 +13,30 @@ const persistConfig = {
   storage,
 }
 
-const rootReducer = combineReducers({
-  session: sessionReducer,
+// Combine your reducers
+const appReducer = combineReducers({
   auth: authReducer,
+  session: sessionReducer,
+  studio: studioReducer,
 })
 
+// Root reducer with RESET_STORE logic
+const rootReducer = (state, action) => {
+  if (action.type === 'RESET_STORE') {
+    storage.removeItem('persist:root') // Clear localStorage persisted state
+    return appReducer(undefined, action) // Reset Redux state
+  }
+  return appReducer(state, action)
+}
+
+// Persist the rootReducer
 const persistedReducer = persistReducer(persistConfig, rootReducer)
 
 const store = configureStore({
   reducer: persistedReducer,
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
-      serializableCheck: false, // needed for redux-persist
+      serializableCheck: false,
     }).concat(logger),
 })
 

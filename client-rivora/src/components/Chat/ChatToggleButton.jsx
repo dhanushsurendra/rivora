@@ -2,7 +2,6 @@ import { BsChat } from 'react-icons/bs'
 import ChatWindow from './ChatWindow'
 
 const ChatToggleButton = ({ isOpen, handleChatToggle }) => {
-  console.log(isOpen)
   return (
     <div className='relative'>
       <button

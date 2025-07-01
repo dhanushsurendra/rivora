@@ -18,6 +18,7 @@ const authenticateToken = async (req, res, next) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET)
     // Attach the decoded user information to the request object
     // This allows subsequent middleware/controllers to access req.user
+    console.log(decoded)
     const user = await User.findOne({ _id: decoded.userId })
     // console.log(user)
     if (!user) {    
