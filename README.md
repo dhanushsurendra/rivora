@@ -1,60 +1,87 @@
-# rivora
-Rivora — Where conversations flow effortlessly. A seamless platform for recording, streaming, and merging multi-user video and audio sessions into one polished experience.
+# 🎥 Rivora – Riverside.fm Clone (MERN + 100ms + Cloudinary)
 
+Rivora is a full-featured video recording platform inspired by [Riverside.fm](https://riverside.fm). It allows creators to host high-quality remote studio sessions with real-time video, chat, and multi-track recording support.
 
-TO DO
-RIVORA MVP
-1. User Flow & Features
-Two users join a shared session (room) via unique link/ID.
+---
 
-Real-time video/audio streaming between users using WebRTC.
+## 🚀 Features
 
-Each user can record their own local video/audio stream.
+- 🔐 **Authentication**
+  - Email/password registration & login
+  - OAuth via Google
 
-After recording, users upload their raw recordings to the backend.
+- 🏗️ **Studio Management**
+  - Create studios
+  - Schedule recordings
+  - Invite guests via unique links
 
-Backend merges the two recordings into a single combined video (side-by-side layout) using FFmpeg.
+- 🎥 **Recording System**
+  - Host & guests can join studios
+  - Uses `MediaRecorder API` to capture video locally
+  - Video chunks are uploaded to **Cloudinary** in real-time
 
-Users can play back the combined final video inside the app.
+- 🛠️ **Post-Processing**
+  - Once recording ends and all chunks are uploaded:
+    - Chunks are combined per user (host & guest)
+    - A final merged video is created using **FFmpeg**
 
-2. Frontend (React + Redux)
-Video call UI with two video windows (host and guest).
+- 💬 **Real-Time Communication**
+  - Built using **100ms SDK**
+  - Real-time video conferencing & chat
 
-WebRTC peer connection setup for streaming.
+---
 
-MediaRecorder API to record local streams.
+## 🧰 Tech Stack
 
-Recording controls: Start, Stop, Upload.
+| Category       | Technology              |
+|----------------|--------------------------|
+| Frontend       | React.js, Tailwind CSS   |
+| Backend        | Node.js, Express.js      |
+| Auth           | Firebase Auth / OAuth    |
+| DB             | MongoDB + Mongoose       |
+| Real-time      | 100ms SDK                |
+| File Uploads   | Cloudinary               |
+| Video Merge    | FFmpeg (server-side)     |
 
-Playback component for the final merged video.
+---
 
-Redux to manage session state, recording status, and uploaded files.
+## 📸 Studio Flow Overview
 
-3. Backend (Node.js + Express)
-API to create/join sessions.
+1. **User Sign-Up/Login** (OAuth available)
+2. **Create a Studio** → Set date/time
+3. **Invite Guests** → Share the generated link
+4. **Join Session** → Real-time video using 100ms
+5. **Record** → MediaRecorder captures local stream, uploads chunks
+6. **Processing** → Merge chunks using FFmpeg into:
+   - Host video
+   - Guest video
+   - Final merged video
+7. **Ready to Publish!**
 
-Endpoint to accept raw recording file uploads with metadata.
+---
 
-Run FFmpeg to sync and merge recordings into one video.
+## 🛠️ Local Setup
 
-Store raw and processed videos (AWS S3 or local).
+```bash
+# 1. Clone the repository
+git clone https://github.com/yourusername/rivora.git
+cd rivora
 
-Endpoint to fetch combined final video URL.
+# 2. Install backend dependencies
+cd server
+npm install
 
-4. Database (MongoDB)
-Store sessions with user info.
+# 3. Set up environment variables (.env)
+# Example:
+PORT=5000
+MONGO_URI=your_mongo_uri
+CLOUDINARY_CLOUD_NAME=...
+CLOUDINARY_API_KEY=...
+CLOUDINARY_API_SECRET=...
 
-Save file paths and processing status.
+# 4. Install frontend dependencies
+cd ../client
+npm install
 
-5. Tech Stack Summary
-React + Redux (Frontend)
-
-Node.js + Express (Backend)
-
-MongoDB (Database)
-
-WebRTC + MediaRecorder API (Streaming & recording)
-
-FFmpeg (Video processing)
-
-AWS S3 or local storage (Files)
+# 5. Start development
+npm run dev   # Or use concurrently to start both
