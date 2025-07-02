@@ -1,13 +1,13 @@
 require('dotenv').config() // Load environment variables from .env file
-const ffmpeg = require('fluent-ffmpeg');
-const ffmpegInstaller = require('@ffmpeg-installer/ffmpeg');
-const cloudinary = require('cloudinary').v2;
-const fs = require('fs');
-const path = require('path');
-const axios = require('axios');
-const Session = require('./models/session') // Adjust path as needed
+const ffmpeg = require('fluent-ffmpeg')
+const ffmpegInstaller = require('@ffmpeg-installer/ffmpeg')
+const cloudinary = require('cloudinary').v2
+const fs = require('fs')
+const path = require('path')
+const axios = require('axios')
+const Session = require('../models/session')
 
-ffmpeg.setFfmpegPath(ffmpegInstaller.path);
+ffmpeg.setFfmpegPath(ffmpegInstaller.path)
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -153,8 +153,24 @@ async function getSortedChunks(sessionId, role) {
 async function concatenateChunks(sessionId, role) {
   const finalPublicId = `recordings/${sessionId}/${role}/${role}-final`
   const chunkPublicIds = await getSortedChunks(sessionId, role)
-  if (chunkPublicIds.length < 2)
-    throw new Error('Need at least 2 chunks to concatenate')
+  
+  if (chunkPublicIds.length === 1) {
+    console.log(`[${role}] Only one chunk found, skipping concatenation...`)
+
+    const result = await cloudinary.uploader.rename(
+      chunkPublicIds[0],
+      finalPublicId,
+      {
+        resource_type: 'video',
+        overwrite: true,
+        invalidate: true,
+      }
+    )
+
+    const finalUrl = result.secure_url
+    console.log(`[${role}] ✅ Single chunk renamed to final: ${finalUrl}`)
+    return finalUrl
+  }
 
   console.log(`[${role}] ✅ Chunks to concatenate:`, chunkPublicIds)
 
@@ -215,13 +231,13 @@ async function concatenateChunks(sessionId, role) {
  * @returns {Promise<string>} The secure URL of the merged video.
  */
 async function downloadVideo(url, outputPath) {
-  const writer = fs.createWriteStream(outputPath);
-  const response = await axios.get(url, { responseType: 'stream' });
-  response.data.pipe(writer);
+  const writer = fs.createWriteStream(outputPath)
+  const response = await axios.get(url, { responseType: 'stream' })
+  response.data.pipe(writer)
   return new Promise((resolve, reject) => {
-    writer.on('finish', resolve);
-    writer.on('error', reject);
-  });
+    writer.on('finish', resolve)
+    writer.on('error', reject)
+  })
 }
 
 async function mergeVideosFFmpeg(hostPath, guestPath, outputPath) {
@@ -235,92 +251,108 @@ async function mergeVideosFFmpeg(hostPath, guestPath, outputPath) {
         // Scale and crop guest video
         '[1:v]scale=w=640:h=720:force_original_aspect_ratio=increase,crop=w=640:h=720[right_padded]',
         // Stack both side by side
-        '[left_padded][right_padded]hstack=inputs=2,format=yuv420p[outv]'
+        '[left_padded][right_padded]hstack=inputs=2,format=yuv420p[outv]',
       ])
       .outputOptions([
-        '-map', '[outv]',     // Final video output from filter
-        '-map', '0:a?',       // Optional audio from host (if it exists)
-        '-c:v', 'libx264',
-        '-c:a', 'aac',
-        '-crf', '23',
-        '-preset', 'veryfast',
+        '-map',
+        '[outv]', // Final video output from filter
+        '-map',
+        '0:a?', // Optional audio from host (if it exists)
+        '-c:v',
+        'libx264',
+        '-c:a',
+        'aac',
+        '-crf',
+        '23',
+        '-preset',
+        'veryfast',
         '-shortest',
-        '-movflags', '+faststart',
-        '-s', '1280x720',
-        '-y' // Overwrite if exists
+        '-movflags',
+        '+faststart',
+        '-s',
+        '1280x720',
+        '-y', // Overwrite if exists
       ])
       .output(outputPath)
       .on('end', () => {
-        console.log('✅ Video merging finished successfully with audio!');
-        resolve();
+        console.log('✅ Video merging finished successfully with audio!')
+        resolve()
       })
       .on('error', (err) => {
-        console.error('❌ Error during video merging:', err.message);
-        reject(err);
+        console.error('❌ Error during video merging:', err.message)
+        reject(err)
       })
-      .run();
-  });
+      .run()
+  })
 }
 
 async function mergeFinalVideos(sessionId) {
-  const hostPublicId = `recordings/${sessionId}/host/host-final`;
-  const guestPublicId = `recordings/${sessionId}/guest/guest-final`;
-  const mergedPublicId = `recordings/${sessionId}/merged/final-merged-video`;
+  const hostPublicId = `recordings/${sessionId}/host/host-final`
+  const guestPublicId = `recordings/${sessionId}/guest/guest-final`
+  const mergedPublicId = `recordings/${sessionId}/merged/final-merged-video`
 
-  console.log(`[MERGE] Preparing to merge host & guest...`);
+  console.log(`[MERGE] Preparing to merge host & guest...`)
 
-  const hostDetails = await getResourceDetailsWithRetry(hostPublicId);
-  const guestDetails = await getResourceDetailsWithRetry(guestPublicId);
+  const hostDetails = await getResourceDetailsWithRetry(hostPublicId)
+  const guestDetails = await getResourceDetailsWithRetry(guestPublicId)
 
-  if (!hostDetails.exists) throw new Error(`Host video not found: ${hostPublicId}`);
-  if (!guestDetails.exists) throw new Error(`Guest video not found: ${guestPublicId}`);
+  if (!hostDetails.exists)
+    throw new Error(`Host video not found: ${hostPublicId}`)
+  if (!guestDetails.exists)
+    throw new Error(`Guest video not found: ${guestPublicId}`)
 
-  const hostUrl = cloudinary.url(hostPublicId, { resource_type: 'video', secure: true });
-  const guestUrl = cloudinary.url(guestPublicId, { resource_type: 'video', secure: true });
+  const hostUrl = cloudinary.url(hostPublicId, {
+    resource_type: 'video',
+    secure: true,
+  })
+  const guestUrl = cloudinary.url(guestPublicId, {
+    resource_type: 'video',
+    secure: true,
+  })
 
-  const hostPath = path.join(__dirname, 'host.mp4');
-  const guestPath = path.join(__dirname, 'guest.mp4');
-  const mergedPath = path.join(__dirname, 'merged.mp4');
+  const hostPath = path.join(__dirname, 'host.mp4')
+  const guestPath = path.join(__dirname, 'guest.mp4')
+  const mergedPath = path.join(__dirname, 'merged.mp4')
 
   // Step 1: Download both videos
-  console.log(`[MERGE] Downloading host video...`);
-  await downloadVideo(hostUrl, hostPath);
-  console.log(`[MERGE] Downloading guest video...`);
-  await downloadVideo(guestUrl, guestPath);
+  console.log(`[MERGE] Downloading host video...`)
+  await downloadVideo(hostUrl, hostPath)
+  console.log(`[MERGE] Downloading guest video...`)
+  await downloadVideo(guestUrl, guestPath)
 
   // Step 2: Merge with FFmpeg
-  console.log(`[MERGE] Merging videos side by side...`);
-  await mergeVideosFFmpeg(hostPath, guestPath, mergedPath);
+  console.log(`[MERGE] Merging videos side by side...`)
+  await mergeVideosFFmpeg(hostPath, guestPath, mergedPath)
 
   // Step 3: Upload to Cloudinary
-  console.log(`[MERGE] Uploading merged video to Cloudinary...`);
+  console.log(`[MERGE] Uploading merged video to Cloudinary...`)
   const upload = await cloudinary.uploader.upload(mergedPath, {
     resource_type: 'video',
     public_id: mergedPublicId,
     overwrite: true,
-    invalidate: true
-  });
+    invalidate: true,
+  })
 
   // Step 4: Cleanup
-  fs.unlinkSync(hostPath);
-  fs.unlinkSync(guestPath);
-  fs.unlinkSync(mergedPath);
+  fs.unlinkSync(hostPath)
+  fs.unlinkSync(guestPath)
+  fs.unlinkSync(mergedPath)
 
-  const mergedUrl = upload.secure_url;
+  const mergedUrl = upload.secure_url
 
-  console.log(`[MERGE] ✅ Host: ${hostUrl}`);
-  console.log(`[MERGE] ✅ Guest: ${guestUrl}`);
-  console.log(`[MERGE] ✅ Merged: ${mergedUrl}`);
+  console.log(`[MERGE] ✅ Host: ${hostUrl}`)
+  console.log(`[MERGE] ✅ Guest: ${guestUrl}`)
+  console.log(`[MERGE] ✅ Merged: ${mergedUrl}`)
 
-  return mergedUrl;
+  return mergedUrl
 }
 
 async function deleteAllChunks(sessionId) {
-  const roles = ['host', 'guest'];
+  const roles = ['host', 'guest']
 
   for (const role of roles) {
-    const prefix = `recordings/${sessionId}/${role}/chunk-`;
-    console.log(`[CLEANUP] 🔍 Looking for chunks to delete in: ${prefix}`);
+    const prefix = `recordings/${sessionId}/${role}/chunk-`
+    console.log(`[CLEANUP] 🔍 Looking for chunks to delete in: ${prefix}`)
 
     try {
       const result = await cloudinary.api.resources({
@@ -328,23 +360,30 @@ async function deleteAllChunks(sessionId) {
         prefix,
         resource_type: 'video',
         max_results: 500,
-      });
+      })
 
-      const publicIds = result.resources.map((res) => res.public_id);
+      const publicIds = result.resources.map((res) => res.public_id)
 
       if (publicIds.length === 0) {
-        console.log(`[CLEANUP] ✅ No chunks found for ${role}. Skipping...`);
-        continue;
+        console.log(`[CLEANUP] ✅ No chunks found for ${role}. Skipping...`)
+        continue
       }
 
-      console.log(`[CLEANUP] 🧹 Deleting ${publicIds.length} chunks for ${role}...`);
+      console.log(
+        `[CLEANUP] 🧹 Deleting ${publicIds.length} chunks for ${role}...`
+      )
       await cloudinary.api.delete_resources(publicIds, {
         resource_type: 'video',
-      });
+      })
 
-      console.log(`[CLEANUP] ✅ Deleted ${publicIds.length} chunks for ${role}.`);
+      console.log(
+        `[CLEANUP] ✅ Deleted ${publicIds.length} chunks for ${role}.`
+      )
     } catch (err) {
-      console.error(`[CLEANUP] ❌ Error deleting chunks for ${role}:`, err.message);
+      console.error(
+        `[CLEANUP] ❌ Error deleting chunks for ${role}:`,
+        err.message
+      )
     }
   }
 }
@@ -353,36 +392,39 @@ async function processSession(sessionId) {
   try {
     console.log(`--- 🔄 Starting session processing for: ${sessionId} ---`)
 
-    console.log(`[PIPELINE] Step 1: Concatenating host chunks using Cloudinary...`)
+    console.log(
+      `[PIPELINE] Step 1: Concatenating host chunks using Cloudinary...`
+    )
     const hostUrl = await concatenateChunks(sessionId, 'host')
     console.log(`[PIPELINE] Host concatenation completed: ${hostUrl}`)
 
-    console.log(`[PIPELINE] Step 2: Concatenating guest chunks using Cloudinary...`)
+    console.log(
+      `[PIPELINE] Step 2: Concatenating guest chunks using Cloudinary...`
+    )
     const guestUrl = await concatenateChunks(sessionId, 'guest')
     console.log(`[PIPELINE] Guest concatenation completed: ${guestUrl}`)
 
-    console.log(`[PIPELINE] Waiting ${RETRY_DELAY_MS / 1000} seconds before merging...`)
+    console.log(
+      `[PIPELINE] Waiting ${RETRY_DELAY_MS / 1000} seconds before merging...`
+    )
     await delay(RETRY_DELAY_MS)
 
     console.log(`[PIPELINE] Step 3: Merging final videos...`)
     const mergedUrl = await mergeFinalVideos(sessionId)
-    console.log(`🎉 Pipeline completed successfully. Final merged URL: ${mergedUrl}`)
-
-    console.log(`[PIPELINE] Step 4: Updating DB with video URLs...`)
-    await Session.findByIdAndUpdate(sessionId, {
-      $set: {
-        'mergedVideo.host': hostUrl,
-        'mergedVideo.guest': guestUrl,
-        'mergedVideo.finalMerged': mergedUrl,
-      }
-    })
+    console.log(
+      `🎉 Pipeline completed successfully. Final merged URL: ${mergedUrl}`
+    )
 
     console.log(`[PIPELINE] ✅ Session updated with merged video URLs.`)
 
     console.log(`[PIPELINE] Step 5: Deleting all chunks...`)
     await deleteAllChunks(sessionId)
 
-    return mergedUrl
+    return {
+      hostUrl,
+      guestUrl,
+      mergedUrl,
+    }
   } catch (err) {
     console.error(`❌ Processing failed for session ${sessionId}:`, err.message)
     if (err.http_code) {
@@ -393,5 +435,27 @@ async function processSession(sessionId) {
 }
 
 module.exports = {
-  processSession
-};
+  processSession,
+}
+
+// Test execution (only runs if this file is executed directly)
+if (require.main === module) {
+  ;(async () => {
+    const testSessionId = '686527956a9c98d1cde73927' // Replace with your actual sessionId
+    try {
+      console.log('Starting processing...')
+      const finalUrl = await processSession(testSessionId)
+      console.log(
+        '✅ Test completed successfully. Concatenated Host video:',
+        finalUrl
+      ) // Updated log message
+    } catch (e) {
+      console.error('❌ Test session failed:', e.message)
+      if (e.http_code) {
+        console.error('Cloudinary API HTTP Code: ${e.http_code}')
+      }
+
+      // Run debug again to see current state
+    }
+  })()
+}

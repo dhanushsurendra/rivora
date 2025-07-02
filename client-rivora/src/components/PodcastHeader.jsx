@@ -2,7 +2,13 @@ import { GoPeople, GoPersonAdd } from 'react-icons/go'
 import { IoMdCloudUpload } from 'react-icons/io'
 
 // Accept isUploading and uploadProgress as props
-const Header = ({ participantCount, title, userInitial = 'L', isUploading, uploadProgress }) => {
+const Header = ({
+  participantCount,
+  title,
+  userInitial = 'L',
+  isUploading,
+  uploadProgress,
+}) => {
   return (
     <header className='relative flex items-center justify-between px-6 py-3 bg-[#111111] z-10'>
       {/* Left Side */}
@@ -15,7 +21,7 @@ const Header = ({ participantCount, title, userInitial = 'L', isUploading, uploa
       </div>
 
       {/* Center - Rivora */}
-      <h1 className='text-2xl font-bold tracking-wide text-[#8A65FD]'>
+      <h1 className='absolute left-1/2 -translate-x-1/2 text-2xl font-bold tracking-wide text-[#8A65FD]'>
         Rivora
       </h1>
 
@@ -24,7 +30,8 @@ const Header = ({ participantCount, title, userInitial = 'L', isUploading, uploa
         {/* Conditionally render upload indicator */}
         {isUploading ? (
           <div className='flex items-center space-x-2 text-gray-400'>
-            <IoMdCloudUpload className='w-6 h-6 animate-pulse' /> {/* Add pulse animation */}
+            <IoMdCloudUpload className='w-6 h-6 animate-pulse' />{' '}
+            {/* Add pulse animation */}
             <span className='text-sm font-medium'>{uploadProgress}%</span>
           </div>
         ) : (

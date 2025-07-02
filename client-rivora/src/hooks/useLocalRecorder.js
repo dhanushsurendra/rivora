@@ -5,7 +5,6 @@ const CLOUD_NAME = "dntwulwaj"; // Replace with your Cloudinary Cloud Name
 const UPLOAD_PRESET = "rivora_preset"; // Replace with your Cloudinary Upload Preset
 
 const useLocalRecording = (sessionId, userRole) => {
-  console.log(`[${userRole}] useLocalRecording hook loaded (Cloudinary Upload Mode)`);
 
   const mediaStreamRef = useRef(null); // Holds the MediaStream from getUserMedia
   const [isRecording, setIsRecording] = useState(false); // Public state for recording status
@@ -104,7 +103,6 @@ const useLocalRecording = (sessionId, userRole) => {
         if (event.lengthComputable) {
           const percentComplete = Math.round((event.loaded * 100) / event.total);
           setUploadProgress(percentComplete);
-          console.log(`[${userRole}] Uploading chunk ${currentChunkNum}: ${percentComplete}%`);
         }
       });
 

@@ -189,6 +189,10 @@ const DeviceSetupPage = () => {
     }
   }, [stream])
 
+  useEffect(() => {
+    
+  })
+
   const { token } = useParams()
 
   const handleJoinStudio = async () => {

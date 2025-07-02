@@ -14,15 +14,12 @@ const sessionSchema = new mongoose.Schema({
   scheduledAt: { type: Date, required: true },
   isLive: { type: Boolean, default: false },
 
-  videoChunks: {
-    host: [{ type: String }],  // array of Cloudinary URLs or public IDs
-    guest: [{ type: String }],
-  },
+  roomId: { type: String, required: true }, // ← added this line for 100ms room ID
 
   mergedVideo: {
-    host: { type: String },    // optional: URL of host's full merged video
-    guest: { type: String },   // optional: URL of guest's full merged video
-    finalMerged: { type: String }, // optional: full final stitched output
+    host: { type: String },
+    guest: { type: String },
+    finalMerged: { type: String },
   },
 
   createdAt: { type: Date, default: Date.now },

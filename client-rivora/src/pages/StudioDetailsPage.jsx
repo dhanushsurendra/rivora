@@ -1,44 +1,16 @@
 // src/pages/StudioDetailsPage.jsx
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { useSelector } from 'react-redux'
 import { ToastContainer, toast } from 'react-toastify'
 import axiosInstance from '../api/axios'
 import Button from '../components/Button/Button'
 import { MoonLoader } from 'react-spinners'
 import Header from '../components/Header'
+import { FaRegClock } from 'react-icons/fa6'
+import { MdOutlinePerson } from 'react-icons/md'
 
-// Reusable icons (adjusted for better visual harmony)
-const ClockIcon = () => (
-  <svg
-    xmlns='http://www.w3.org/2000/svg'
-    className='h-6 w-6 mr-4 text-gray-400 flex-shrink-0' // Increased size, margin, added color, and flex-shrink-0
-    viewBox='0 0 20 20'
-    fill='currentColor'
-  >
-    <path
-      fillRule='evenodd'
-      d='M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l3 3a1 1 0 001.414-1.414L11 9.586V6z'
-      clipRule='evenodd'
-    />
-  </svg>
-)
-const UserIcon = () => (
-  <svg
-    xmlns='http://www.w3.org/2000/svg'
-    className='h-6 w-6 mr-4 text-gray-400 flex-shrink-0' // Increased size, margin, added color, and flex-shrink-0
-    viewBox='0 0 20 20'
-    fill='currentColor'
-  >
-    <path
-      fillRule='evenodd'
-      d='M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z'
-      clipRule='evenodd'
-    />
-  </svg>
-)
 const StatusDot = ({ color }) => (
-  <span className={`h-3 w-3 rounded-full ${color} mr-3 flex-shrink-0`}></span> // Adjusted size and margin, added flex-shrink-0
+  <span className={`h-3 w-3 rounded-full ${color} mr-3 flex-shrink-0`}></span>
 )
 
 // Simple Video Player Component
@@ -60,7 +32,7 @@ const VideoPlayer = ({ src, title }) => (
 const ChatMessage = ({ senderName, senderRole, message, sentAt }) => {
   const isHost = senderRole === 'host'
   const roleColor = isHost ? 'text-blue-400' : 'text-purple-400'
-  const bubbleBg = isHost ? 'bg-[#333344]' : 'bg-[#333333]' // Slightly different shade for host messages
+  const bubbleBg = isHost ? 'bg-[#333344]' : 'bg-[#333333]'
 
   return (
     <div
@@ -92,105 +64,44 @@ const StudioDetailsPage = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
-  const tempVideoClips = [
-    {
-      id: 'v1',
-      url: 'https://www.w3schools.com/html/mov_bbb.mp4',
-      title: 'Host Recording (Short)',
-    },
-    {
-      id: 'v2',
-      url: 'https://www.w3schools.com/html/movie.mp4',
-      title: 'Guest Recording (Short)',
-    },
-    {
-      id: 'v3',
-      url: 'https://www.w3schools.com/html/mov_bbb.mp4',
-      title: 'Full Recording (Long)',
-    },
-  ]
-
-  const dummyTranscript =
-    'This is a placeholder for the session transcript. In a real application, this would be generated from the audio recording. It could include speaker identification and timestamps. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.'
-
-  const dummyChatMessages = [
-    {
-      senderName: 'Alice (Host)',
-      senderRole: 'host',
-      message: 'Welcome everyone! Glad you could make it.',
-      sentAt: new Date(Date.now() - 10 * 60 * 1000).toISOString(),
-    },
-    {
-      senderName: 'Bob (Guest)',
-      senderRole: 'guest',
-      message: 'Hey Alice! Ready to start.',
-      sentAt: new Date(Date.now() - 9 * 60 * 1000).toISOString(),
-    },
-    {
-      senderName: 'Charlie (Participant)',
-      senderRole: 'participant',
-      message: 'Good to be here. Excited for this session!',
-      sentAt: new Date(Date.now() - 8 * 60 * 1000).toISOString(),
-    },
-    {
-      senderName: 'Alice (Host)',
-      senderRole: 'host',
-      message:
-        "Just a quick reminder, we'll be discussing the Q2 marketing strategy today. Feel free to ask questions in the chat as we go along. This is a slightly longer message to test wrapping and display.",
-      sentAt: new Date(Date.now() - 7 * 60 * 1000).toISOString(),
-    },
-    {
-      senderName: 'Bob (Guest)',
-      senderRole: 'guest',
-      message:
-        'Sounds great! I have a few questions already about the budget allocation.',
-      sentAt: new Date(Date.now() - 6 * 60 * 1000).toISOString(),
-    },
-    {
-      senderName: 'Alice (Host)',
-      senderRole: 'host',
-      message:
-        "Perfect, Bob. We'll address those after the initial presentation. Let's get started!",
-      sentAt: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
-    },
-    {
-      senderName: 'Charlie (Participant)',
-      senderRole: 'participant',
-      message: 'Looking forward to it!',
-      sentAt: new Date(Date.now() - 4 * 60 * 1000).toISOString(),
-    },
-    {
-      senderName: 'Alice (Host)',
-      senderRole: 'host',
-      message:
-        'And for anyone who joined late, a recording will be available after the session.',
-      sentAt: new Date(Date.now() - 3 * 60 * 1000).toISOString(),
-    },
-    {
-      senderName: 'Bob (Guest)',
-      senderRole: 'guest',
-      message: "Thanks for the reminder, Alice. That's helpful!",
-      sentAt: new Date(Date.now() - 2 * 60 * 1000).toISOString(),
-    },
-    {
-      senderName: 'Alice (Host)',
-      senderRole: 'host',
-      message: "You're welcome! Enjoy the session.",
-      sentAt: new Date(Date.now() - 1 * 60 * 1000).toISOString(),
-    },
-  ]
-
   useEffect(() => {
     const fetchStudioDetails = async () => {
       try {
         setLoading(true)
         setError(null)
         const response = await axiosInstance.get(`/session/${sessionId}`)
+        const sessionData = response.data.session
+
+        // Prepare video clips from mergedVideo data
+        const fetchedVideoClips = []
+        if (sessionData.mergedVideo) {
+          if (sessionData.mergedVideo.finalMerged) {
+            fetchedVideoClips.push({
+              id: 'finalMerged',
+              url: sessionData.mergedVideo.finalMerged,
+              title: 'Final Merged Recording',
+            })
+          }
+          if (sessionData.mergedVideo.host) {
+            fetchedVideoClips.push({
+              id: 'hostRecording',
+              url: sessionData.mergedVideo.host,
+              title: 'Host Recording',
+            })
+          }
+          if (sessionData.mergedVideo.guest) {
+            fetchedVideoClips.push({
+              id: 'guestRecording',
+              url: sessionData.mergedVideo.guest,
+              title: 'Guest Recording',
+            })
+          }
+        }
+
         setStudio({
-          ...response.data.session,
-          hostToken: response.data.hostToken,
-          videoClips: tempVideoClips,
-          chatMessages: dummyChatMessages,
+          ...sessionData,
+          hostToken: response.data.hostToken, // Assuming hostToken is directly on response.data
+          videoClips: fetchedVideoClips,
         })
       } catch (err) {
         console.error('Error fetching studio details:', err)
@@ -310,34 +221,39 @@ const StudioDetailsPage = () => {
             Session Overview
           </h2>
           <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
-            {/* Card for Host */}
             <div
               className='
-                flex items-center p-5 bg-[#1E1E1E] rounded-lg
-                shadow-md border border-[#2e2e2e]
-                hover:border-[#8A65FD] hover:shadow-lg
-                transition-all duration-300
+                  flex flex-col items-start p-5 bg-[#1E1E1E] rounded-lg
+                  shadow-md border border-[#2e2e2e]
+                  hover:border-[#8A65FD] hover:shadow-lg
+                  transition-all duration-300
+                  space-y-2
                 '
             >
-              <UserIcon /> {/* Now with h-6 w-6 mr-4 text-gray-400 */}
-              <div>
+              <div className='space-y-1'>
+                <div className='text-[#8A65FD] text-2xl'>
+                  <MdOutlinePerson />
+                </div>
                 <p className='font-medium text-sm text-gray-400'>Host</p>
                 <p className='text-lg font-semibold text-white'>
-                  {studio.host?.name || 'N/A'}
+                  {studio.host.name}
                 </p>
               </div>
             </div>
             {/* Card for Scheduled Time */}
             <div
               className='
-                    flex items-center p-5 bg-[#1E1E1E] rounded-lg
-                    shadow-md border border-[#2e2e2e]
-                    hover:border-[#8A65FD] hover:shadow-lg
-                    transition-all duration-300
-                    '
+                  flex flex-col items-start p-5 bg-[#1E1E1E] rounded-lg
+                  shadow-md border border-[#2e2e2e]
+                  hover:border-[#8A65FD] hover:shadow-lg
+                  transition-all duration-300
+                  space-y-2
+                '
             >
-              <ClockIcon /> {/* Now with h-6 w-6 mr-4 text-gray-400 */}
-              <div>
+              <div className='space-y-1'>
+                <div className='text-[#8A65FD] text-2xl'>
+                  <FaRegClock className='w-5 h-5' />
+                </div>
                 <p className='font-medium text-sm text-gray-400'>
                   Scheduled At
                 </p>
@@ -346,6 +262,7 @@ const StudioDetailsPage = () => {
                 </p>
               </div>
             </div>
+
             {/* Card for Status */}
             <div
               className='
@@ -355,32 +272,33 @@ const StudioDetailsPage = () => {
                 transition-all duration-300
                 '
             >
-              {!isLive && (
-                <StatusDot
-                  color={
-                    isLive
-                      ? 'bg-green-500'
-                      : isOver
-                      ? 'bg-red-500'
-                      : 'bg-yellow-500'
-                  }
-                />
-              )}
-              {/* Now h-3 w-3 mr-3 */}
               <div>
                 <p className='font-medium text-sm text-gray-400'>Status</p>
-                <p className='text-lg font-semibold'>
-                  {isLive ? (
-                    <span className='text-green-400 flex items-center'>
-                      <span className='h-3 w-3 rounded-full bg-green-500 animate-pulse mr-3'></span>{' '}
-                      Live Now
-                    </span>
-                  ) : isOver ? (
-                    <span className='text-red-400'>Ended</span>
-                  ) : (
-                    <span className='text-yellow-400'>Upcoming</span>
+                <div className='flex items-center'>
+                  {!isLive && (
+                    <StatusDot
+                      color={
+                        isLive
+                          ? 'bg-green-500'
+                          : isOver
+                          ? 'bg-red-500'
+                          : 'bg-yellow-500'
+                      }
+                    />
                   )}
-                </p>
+                  <p className='text-lg font-semibold'>
+                    {isLive ? (
+                      <span className='text-green-400 flex items-center'>
+                        <span className='h-3 w-3 rounded-full bg-green-500 animate-pulse mr-3'></span>{' '}
+                        Live Now
+                      </span>
+                    ) : isOver ? (
+                      <span className='text-red-400'>Ended</span>
+                    ) : (
+                      <span className='text-yellow-400'>Upcoming</span>
+                    )}
+                  </p>
+                </div>
               </div>
             </div>
           </div>
@@ -417,7 +335,7 @@ const StudioDetailsPage = () => {
           </div>
         </div>
 
-        {isOver && (
+        {!studio.isLive && (
           <div className='bg-[#252525] rounded-lg p-6 my-8 shadow-xl border border-[#333333]'>
             <h2 className='text-2xl font-bold text-white mb-6'>
               Post-Session Content
@@ -426,6 +344,7 @@ const StudioDetailsPage = () => {
             <h3 className='text-xl font-semibold text-white mb-4 border-b border-[#333333] pb-2'>
               Recordings & Clips
             </h3>
+            {/* Display actual video clips if available */}
             {studio.videoClips && studio.videoClips.length > 0 ? (
               <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
                 {studio.videoClips.map((clip) => (
@@ -438,13 +357,7 @@ const StudioDetailsPage = () => {
                       />
                     </div>
                     <Button
-                      text={
-                        clip.id === 'v1'
-                          ? 'Download Host Recording'
-                          : clip.id === 'v2'
-                          ? 'Download Guest Recording'
-                          : 'Download Full Recording'
-                      }
+                      text={`Download ${clip.title}`} // Dynamic button text
                       className='bg-blue-600 hover:bg-blue-700'
                       onClick={() => window.open(clip.url, '_blank')}
                     />

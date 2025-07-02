@@ -10,15 +10,17 @@ import {
   selectHMSMessages,
   useAVToggle,
 } from '@100mslive/react-sdk'
+import axiosInstance from '../api/axios'
 
 import { useSelector } from 'react-redux'
 import VideoControls from '../components/VideoControls'
 import Header from '../components/PodcastHeader'
 import useLocalRecorder from '../hooks/useLocalRecorder'
-import { toast } from 'react-toastify' // Assuming toast is available for notifications
+import { toast, ToastContainer } from 'react-toastify'
 
 // Import icons for VideoTile
-import { IoMicOutline, IoVideocamOutline } from 'react-icons/io5'
+import { IoMicOffOutline } from 'react-icons/io5'
+import { IoVideocamOffOutline } from 'react-icons/io5'
 
 const StudioPage = () => {
   const { sessionId } = useParams()
@@ -30,12 +32,12 @@ const StudioPage = () => {
   const peers = useHMSStore(selectPeers)
   const isConnected = useHMSStore(selectIsConnectedToRoom)
   const hmsMessages = useHMSStore(selectHMSMessages)
+  const [recordingStopped, setRecordingStopped] = useState(false)
+  const hasBroadcastedRef = useRef(false) // Ref to prevent multiple guest 'upload-complete' broadcasts
 
   const [showSlider, setShowSlider] = useState(false)
   const [volume, setVolume] = useState(50)
-  const [showConfirmModal, setShowConfirmModal] = useState(false) // State for the confirmation modal
-
-  const previousMessageCount = useRef(0)
+  const [showConfirmModal, setShowConfirmModal] = useState(false)
 
   const { isLocalAudioEnabled, isLocalVideoEnabled, toggleAudio, toggleVideo } =
     useAVToggle()
@@ -46,24 +48,53 @@ const StudioPage = () => {
     isRecording,
     startRecording,
     stopRecording,
-    uploadedChunkUrls,
-    isUploading, // Get isUploading state from hook
-    uploadProgress, // Get uploadProgress state from hook
+    isUploading,
+    uploadProgress,
   } = useLocalRecorder(sessionId, role)
 
   const hmsActions = useHMSActions()
+
+  // Ref to track the number of messages already processed
+  const processedMessageCountRef = useRef(0) // <--- New/Corrected usage for message processing
+
+  // Function to trigger host upload (memoized for stability)
+  const triggerHostUpload = useCallback(async (currentSessionId) => {
+    if (!currentSessionId) {
+      console.warn('❌ triggerHostUpload: Session ID is missing.')
+      return
+    }
+
+    if (isUploading) {
+      console.warn('❌ triggerHostUpload: uploading chunks.')
+      return
+    }
+
+    console.log('📤 Triggering host upload for session:', currentSessionId)
+    try {
+      toast.success('Video merging process initiated on server!', {
+        theme: 'dark',
+      })
+      await axiosInstance.post('/session/merge-videos', {
+        sessionId: currentSessionId,
+      })
+      console.log('✅ Merge video request sent successfully.')
+    } catch (error) {
+      console.error('❌ Error sending merge video request:', error)
+      toast.error(`Failed to initiate merge: ${error.message}`, {
+        theme: 'dark',
+      })
+    }
+  }, [])
 
   // Effect to handle joining the room
   useEffect(() => {
     if (!isConnected) {
       const joinRoom = async () => {
         try {
-          // Request media permissions first
           const stream = await navigator.mediaDevices.getUserMedia({
             video: true,
             audio: true,
           })
-          // Stop tracks immediately after checking permissions, as useLocalRecorder will get its own stream
           stream.getTracks().forEach((track) => track.stop())
           console.log('✅ Got user media permissions.')
 
@@ -72,13 +103,21 @@ const StudioPage = () => {
               ? import.meta.env.VITE_100MS_HOST_TOKEN
               : import.meta.env.VITE_100MS_GUEST_TOKEN
 
+          if (!token) {
+            console.error('❌ 100MS Token is missing for role:', role)
+            toast.error('Failed to join: Missing authentication token.', {
+              theme: 'dark',
+            })
+            return
+          }
+
           await hmsActions.join({
             userName,
             authToken: token,
             settings: { isAudioMuted: false, isVideoMuted: false },
           })
 
-          console.log('✅ Joined room successfully')
+          console.log('✅ Joined room successfully as', role, ':', userName)
         } catch (err) {
           console.error('❌ Failed to join room:', err)
           toast.error(`Join failed: ${err.message}`, { theme: 'dark' })
@@ -86,42 +125,125 @@ const StudioPage = () => {
       }
       joinRoom()
     }
-  }, [isConnected, hmsActions, role, sessionId, userName])
+  }, [isConnected, hmsActions, role, userName])
 
-  // Effect to listen for recording control messages
+  // Effect to listen for recording control messages from other peers
   useEffect(() => {
-    if (hmsMessages.length > previousMessageCount.current) {
-      const newMessages = hmsMessages.slice(previousMessageCount.current)
-      previousMessageCount.current = hmsMessages.length
+    // Process only new messages since the last render
+    const newMessages = hmsMessages.slice(processedMessageCountRef.current)
 
-      newMessages.forEach((msg) => {
-        if (localPeer?.id === msg.sender && localPeer?.roleName === 'host') {
-          return
-        }
-        try {
-          const data = JSON.parse(msg.message)
-
-          // Only guests should handle messages (host triggers directly and also receives broadcast)
-          // The host also calls startRecording/stopRecording directly, so this ensures guests react.
-          if (data.type === 'start-recording') {
-            startRecording()
-          } else if (data.type === 'stop-recording') {
-            stopRecording()
-          }
-        } catch (err) {
-          console.error('Invalid JSON in message:', msg.message, err)
-        }
-      })
+    if (newMessages.length === 0) {
+      return // No new messages to process
     }
-  }, [hmsMessages, localPeer, startRecording, stopRecording])
+
+    newMessages.forEach((latestMessage) => {
+      // Safeguard: Ignore messages from self if they are intended for remote control.
+      if (localPeer?.id === latestMessage.sender) {
+        console.log('Ignoring own message:', latestMessage.message)
+        return // Skip processing this message
+      }
+
+      try {
+        const data = JSON.parse(latestMessage.message)
+        console.log(
+          `Received message (type: ${data.type}) from ${
+            latestMessage.senderName
+          } (${latestMessage.sender}) at ${new Date(latestMessage.time)}`
+        )
+        console.log('Message data:', data)
+
+        if (data.type === 'start-recording') {
+          if (!isRecording) {
+            console.log(
+              'Host/Guest: Received start-recording. Starting local recording...'
+            )
+            startRecording()
+          } else {
+            console.log(
+              'Host/Guest: Received start-recording but already recording.'
+            )
+          }
+        } else if (data.type === 'stop-recording') {
+          if (isRecording) {
+            console.log(
+              'Host/Guest: Received stop-recording. Stopping local recording...'
+            )
+            stopRecording()
+            if (role === 'guest') {
+              console.log('Guest: Setting recordingStopped flag.')
+              setRecordingStopped(true) // Trigger guest upload broadcast after local upload finishes
+            }
+          } else {
+            console.log(
+              'Host/Guest: Received stop-recording but not recording.'
+            )
+          }
+        } else if (data.type === 'upload-complete') {
+          if (role === 'host') {
+            // Only host processes 'upload-complete' messages
+            console.log('Host: Received upload-complete message from a guest.')
+            triggerHostUpload(sessionId) // Use the useCallback version
+          } else {
+            console.log(
+              'Guest: Received upload-complete (ignoring, as I am guest).'
+            )
+          }
+        }
+      } catch (err) {
+        console.error(
+          'Invalid message format or processing error:',
+          err,
+          'Message:',
+          latestMessage.message
+        )
+      }
+    })
+
+    // Update the ref after processing all new messages
+    processedMessageCountRef.current = hmsMessages.length
+  }, [
+    hmsMessages,
+    localPeer,
+    role,
+    isRecording,
+    startRecording,
+    stopRecording,
+    triggerHostUpload,
+    sessionId,
+  ])
+
+  // Effect for GUEST to broadcast 'upload-complete'
+  useEffect(() => {
+    console.log('Guest upload broadcast effect:', {
+      recordingStopped,
+      isUploading,
+      role,
+      hasBroadcasted: hasBroadcastedRef.current,
+    })
+    if (
+      recordingStopped &&
+      !isUploading &&
+      role === 'guest' &&
+      !hasBroadcastedRef.current
+    ) {
+      console.log(
+        '📤 Guest: All conditions met. Sending upload-complete broadcast...'
+      )
+      hmsActions.sendBroadcastMessage(
+        JSON.stringify({ type: 'upload-complete', userName, sessionId })
+      )
+      hasBroadcastedRef.current = true
+      setRecordingStopped(false)
+      toast.success('Your recording has finished uploading!', { theme: 'dark' })
+    }
+  }, [isUploading, recordingStopped, role, hmsActions, userName, sessionId])
 
   // Effect for browser tab close/refresh warning
   useEffect(() => {
     const handleBeforeUnload = (event) => {
       if (isUploading || isRecording) {
-        // Warn if recording or actively uploading
         event.preventDefault()
-        event.returnValue = '' // Required for Chrome to show confirmation
+        event.returnValue = ''
         return 'Recording or uploading in progress. Are you sure you want to leave? Your data may be lost.'
       }
     }
@@ -131,7 +253,7 @@ const StudioPage = () => {
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload)
     }
-  }, [isUploading, isRecording]) // Depend on isUploading and isRecording
+  }, [isUploading, isRecording])
 
   // Effect for leaving the room on component unmount
   useEffect(() => {
@@ -146,33 +268,42 @@ const StudioPage = () => {
   // Host-initiated recording actions
   const handleStartRecording = async () => {
     if (localPeer?.roleName === 'host') {
+      console.log('Host: Initiating start recording...')
       await hmsActions.sendBroadcastMessage(
         JSON.stringify({ type: 'start-recording' })
       )
-      startRecording() // Host starts their own local recording
+      startRecording()
+    } else {
+      console.log('Not host, cannot start recording from UI.')
     }
   }
 
   const handleStopRecording = async () => {
     if (localPeer?.roleName === 'host') {
+      console.log('Host: Initiating stop recording...')
       await hmsActions.sendBroadcastMessage(
         JSON.stringify({ type: 'stop-recording' })
       )
-      stopRecording() // Host stops their own local recording
+      stopRecording()
+    } else {
+      console.log('Not host, cannot stop recording from UI.')
     }
   }
 
   // Function to handle the actual end call logic (after confirmation)
   const confirmEndCall = async () => {
-    setShowConfirmModal(false) // Close the modal
+    setShowConfirmModal(false)
     try {
       if (role === 'host') {
+        console.log('Host: Ending room...')
         await hmsActions.endRoom(true, 'Host ended the call')
-        navigate('/my-studios') // Navigate after host ends room
+        navigate('/my-studios')
       } else {
+        console.log('Guest: Leaving room...')
         await hmsActions.leave()
-        navigate('/') // Navigate after guest leaves
+        navigate('/')
       }
+      toast.info('Call ended.', { theme: 'dark' })
     } catch (err) {
       console.error('Error ending call:', err)
       toast.error(`Error ending call: ${err.message}`, { theme: 'dark' })
@@ -182,10 +313,8 @@ const StudioPage = () => {
   // Modified handleEndCall to include warning
   const handleEndCall = () => {
     if (isUploading) {
-      // If uploading, show confirmation modal
       setShowConfirmModal(true)
     } else {
-      // Otherwise, proceed directly
       confirmEndCall()
     }
   }
@@ -231,8 +360,8 @@ const StudioPage = () => {
             handleStartRecording={handleStartRecording}
             handleStopRecording={handleStopRecording}
             isRecording={isRecording}
-            isAudioMuted={!isLocalAudioEnabled} // Corrected to reflect muted state
-            isVideoMuted={!isLocalVideoEnabled} // Corrected to reflect muted state
+            isAudioMuted={!isLocalAudioEnabled}
+            isVideoMuted={!isLocalVideoEnabled}
             toggleAudio={toggleAudio}
             toggleVideo={toggleVideo}
             handleEndCall={handleEndCall}
@@ -270,14 +399,17 @@ const StudioPage = () => {
           </div>
         </div>
       )}
+      <ToastContainer />
     </div>
   )
 }
 
 // VideoTile Component (from previous version, included for completeness)
-const VideoTile = ({ peer, role, userName }) => {
+const VideoTile = ({ peer }) => {
   const { videoRef } = useVideo({ trackId: peer.videoTrack })
   const isVideoOff = !peer.videoTrack || peer.isVideoEnabled === false
+
+  const { isLocalAudioEnabled, isLocalVideoEnabled } = useAVToggle()
 
   return (
     <div className='relative w-full h-full min-h-0 bg-gray-900 rounded-xl overflow-hidden flex items-center justify-center'>
@@ -304,12 +436,12 @@ const VideoTile = ({ peer, role, userName }) => {
       <div className='absolute top-4 right-4 flex gap-2'>
         {!peer.isAudioEnabled && (
           <div className='bg-black/70 p-2 rounded-full text-white flex items-center justify-center'>
-            <IoMicOutline className='h-5 w-5' />
+            <IoMicOffOutline className='h-5 w-5' />
           </div>
         )}
         {!peer.isVideoEnabled && (
           <div className='bg-black/70 p-2 rounded-full text-white flex items-center justify-center'>
-            <IoVideocamOutline className='h-5 w-5' />
+            <IoVideocamOffOutline className='h-5 w-5' />
           </div>
         )}
       </div>

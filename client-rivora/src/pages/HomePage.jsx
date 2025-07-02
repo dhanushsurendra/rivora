@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react' // Import useRef
 import { Link, Link as RouterLink } from 'react-router-dom'
 import {
   Sparkles,
@@ -22,8 +22,8 @@ const Button = React.forwardRef(({ className, children, ...props }, ref) => (
   <button
     ref={ref}
     className={`inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50
-                 bg-[#8A65FD] text-white hover:bg-[#724EE0]
-                 h-10 px-4 py-2 ${className || ''}`}
+              bg-[#8A65FD] text-white hover:bg-[#724EE0]
+              h-10 px-4 py-2 ${className || ''}`}
     {...props}
   >
     {children}
@@ -59,6 +59,19 @@ CardContent.displayName = 'CardContent'
 const HomePage = () => {
   const [headerBg, setHeaderBg] = useState(false)
   const isAuthenticated = useSelector((state) => state.auth.isAuthenticated)
+  const dispatch = useDispatch()
+  const navigate = useNavigate()
+
+  // State for user profile popover
+  const [showProfilePopover, setShowProfilePopover] = useState(false)
+  const profileRef = useRef(null) // Ref for the profile icon
+  const popoverRef = useRef(null) // Ref for the popover itself
+
+  // Dummy user data (replace with actual user data from Redux/context if available)
+  const currentUser = {
+    name: 'Dhanush',
+    email: 'dhanush@gmail.com',
+  }
 
   useEffect(() => {
     const handleScroll = () => {
@@ -76,8 +89,24 @@ const HomePage = () => {
     }
   }, [])
 
-  const dispatch = useDispatch()
-  const navigate = useNavigate()
+  // Effect to close popover when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        profileRef.current &&
+        !profileRef.current.contains(event.target) &&
+        popoverRef.current &&
+        !popoverRef.current.contains(event.target)
+      ) {
+        setShowProfilePopover(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [])
 
   const handleLogout = async () => {
     try {
@@ -87,7 +116,7 @@ const HomePage = () => {
 
       removeUserFromLocalStorage()
       dispatch(logout())
-      dispatch({ type: 'RESET_STORE' }) 
+      dispatch({ type: 'RESET_STORE' })
 
       toast.success('Logout successful!', { theme: 'dark' })
 
@@ -96,6 +125,7 @@ const HomePage = () => {
       }, 500)
     } catch (error) {
       console.error('Logout failed', error)
+      toast.error('Logout failed.', { theme: 'dark' });
     }
   }
 
@@ -108,7 +138,10 @@ const HomePage = () => {
         }`}
       >
         <div className='max-w-7xl mx-auto flex items-center justify-center relative'>
-          <Link to={'/'} className='text-xl font-semibold tracking-wide text-[#8A65FD] absolute left-0'>
+          <Link
+            to={'/'}
+            className='text-xl font-semibold tracking-wide text-[#8A65FD] absolute left-0'
+          >
             Rivora
           </Link>
 
@@ -126,28 +159,51 @@ const HomePage = () => {
               How it works
             </a>
             <a
-              href='#projects'
+              href='#pricing' // Changed from #projects to #pricing
               className='hover:text-[#8A65FD] transition-colors duration-200'
             >
               Pricing
             </a>
           </nav>
 
-          {/* Login/Logout buttons, positioned to the right */}
-          <div className='absolute right-0'>
+          {/* Login/Logout buttons and User Icon, positioned to the right */}
+          <div className='absolute right-0 flex items-center space-x-4'>
             <RouterLink
               to='/create-studio'
-              className='border-2 border-[#8A65FD] text-[#8A65FD] px-4 py-2 mr-2 rounded-full hover:bg-[#8A65FD] text-sm font-medium hover:text-white transition'
+              className='border-2 border-[#8A65FD] text-[#8A65FD] px-4 py-2 rounded-full hover:bg-[#8A65FD] text-sm font-medium hover:text-white transition'
             >
               Create Studio
             </RouterLink>
             {isAuthenticated ? (
-              <button
-                onClick={handleLogout}
-                className='bg-[#8A65FD] text-white px-4 py-2 rounded-full text-sm font-medium hover:bg-[#724EE0] transition-colors duration-200 cursor-pointer'
-              >
-                Logout
-              </button>
+              <div className='relative'>
+                <button
+                  ref={profileRef}
+                  onClick={() => setShowProfilePopover(!showProfilePopover)}
+                  className='w-10 h-10 rounded-full bg-[#8A65FD] text-white flex items-center justify-center font-bold text-lg cursor-pointer hover:bg-[#724EE0] transition-colors duration-200'
+                >
+                  {currentUser.name.charAt(0).toUpperCase()}
+                </button>
+                {showProfilePopover && (
+                  <div
+                    ref={popoverRef}
+                    className='absolute right-0 mt-2 w-48 bg-[#1A1A1A] border border-gray-700 rounded-lg shadow-lg py-2 z-50'
+                  >
+                    <div className='px-4 py-2 text-white font-semibold'>
+                      {currentUser.name}
+                    </div>
+                    <div className='px-4 py-1 text-gray-400 text-sm truncate'>
+                      {currentUser.email}
+                    </div>
+                    <div className='border-t border-gray-700 my-2'></div>
+                    <button
+                      onClick={handleLogout}
+                      className='block w-full text-left px-4 py-2 text-red-400 hover:bg-gray-800'
+                    >
+                      Logout
+                    </button>
+                  </div>
+                )}
+              </div>
             ) : (
               <RouterLink
                 to='/login'
@@ -185,7 +241,10 @@ const HomePage = () => {
               anywhere. Perfect for podcasts, interviews, and collaboration.
             </p>
             <div className='flex gap-4 justify-center md:justify-start'>
-              <Link to={'/create-studio'} className='bg-[#8A65FD] text-white cursor-pointer px-6 py-3 rounded-lg font-medium text-sm hover:bg-[#724EE0]'>
+              <Link
+                to={'/create-studio'}
+                className='bg-[#8A65FD] text-white cursor-pointer px-6 py-3 rounded-lg font-medium text-sm hover:bg-[#724EE0]'
+              >
                 Get Started
               </Link>
             </div>
