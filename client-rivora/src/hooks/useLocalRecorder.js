@@ -171,7 +171,7 @@ const useLocalRecording = (sessionId, userRole) => {
         audio: true,
       });
 
-      console.log(`[${userRole}] 🎤 Media stream started`);
+      console.log('[${userRole}] 🎤 Media stream started');
       setIsRecording(true); // Update public state
       recordingActiveRef.current = true; // Set internal flag to true to start the loop
       chunkCounterRef.current = 0; // Reset chunk counter for a new recording session
@@ -181,7 +181,7 @@ const useLocalRecording = (sessionId, userRole) => {
 
       recordChunk(); // Start the first chunk recording
     } catch (error) {
-      console.error(`[${userRole}] ❌ Could not start media stream:`, error);
+      console.error('[${userRole}] ❌ Could not start media stream:', error);
       setIsRecording(false); // Reset public state on error
       recordingActiveRef.current = false; // Reset internal flag on error
       setIsUploading(false); // Reset uploading state on error
@@ -197,7 +197,7 @@ const useLocalRecording = (sessionId, userRole) => {
   // Function to stop the recording process
   const stopRecording = useCallback(() => {
     if (!recordingActiveRef.current) { // Check internal ref for active recording
-      console.warn(`[${userRole}] ⚠️ No recording in progress to stop`);
+      console.warn('[${userRole}] ⚠️ No recording in progress to stop');
       return;
     }
 
@@ -206,20 +206,20 @@ const useLocalRecording = (sessionId, userRole) => {
 
     // Immediately stop the currently active MediaRecorder instance
     if (currentRecorderRef.current && currentRecorderRef.current.state === "recording") {
-      console.log(`[${userRole}] 🛑 Stopping current MediaRecorder instance immediately.`);
+      console.log('[${userRole}] 🛑 Stopping current MediaRecorder instance immediately.');
       currentRecorderRef.current.stop();
       currentRecorderRef.current = null; // Clear the ref after stopping
     } else {
-      console.log(`[${userRole}] No active MediaRecorder instance to stop immediately.`);
+      console.log('[${userRole}] No active MediaRecorder instance to stop immediately.');
     }
 
     // Stop all tracks on the media stream to release camera/mic
     if (mediaStreamRef.current) {
       mediaStreamRef.current.getTracks().forEach((track) => track.stop());
       mediaStreamRef.current = null;
-      console.log(`[${userRole}] 🛑 Media stream tracks stopped.`);
+      console.log('[${userRole}] 🛑 Media stream tracks stopped.');
     }
-    console.log(`[${userRole}] 🛑 Recording stopped by user.`);
+    console.log('[${userRole}] 🛑 Recording stopped by user.');
   }, [userRole]);
 
   // Cleanup effect: Ensures media tracks are stopped and loop is terminated if component unmounts
@@ -237,7 +237,7 @@ const useLocalRecording = (sessionId, userRole) => {
       setIsRecording(false); // Ensure state is reset
       setIsUploading(false); // Ensure uploading state is reset on unmount
       setUploadProgress(0); // Ensure progress is reset on unmount
-      console.log(`[${userRole}] 🧹 Cleaned up recording resources on unmount.`);
+      console.log('[${userRole}] 🧹 Cleaned up recording resources on unmount.');
     };
   }, [userRole]); // Dependency: userRole for logging in cleanup
 
@@ -249,6 +249,6 @@ const useLocalRecording = (sessionId, userRole) => {
     uploadProgress, // NEW: Return the uploadProgress state
     uploadedChunkUrls,
   };
-};
+}
 
 export default useLocalRecording;

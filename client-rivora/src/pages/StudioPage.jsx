@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useEffect, useRef, useState, useCallback } from 'react'
+import { useParams, useNavigate } from 'react-router-dom'
 import {
   useHMSActions,
   useVideo,
@@ -9,39 +9,39 @@ import {
   selectLocalPeer,
   selectHMSMessages,
   useAVToggle,
-} from '@100mslive/react-sdk';
+} from '@100mslive/react-sdk'
 
-import { useSelector } from 'react-redux';
-import VideoControls from '../components/VideoControls';
-import Header from '../components/PodcastHeader';
-import useLocalRecorder from '../hooks/useLocalRecorder';
-import { toast } from 'react-toastify'; // Assuming toast is available for notifications
+import { useSelector } from 'react-redux'
+import VideoControls from '../components/VideoControls'
+import Header from '../components/PodcastHeader'
+import useLocalRecorder from '../hooks/useLocalRecorder'
+import { toast } from 'react-toastify' // Assuming toast is available for notifications
 
 // Import icons for VideoTile
-import { IoMicOutline, IoVideocamOutline } from 'react-icons/io5';
+import { IoMicOutline, IoVideocamOutline } from 'react-icons/io5'
 
 const StudioPage = () => {
-  const { sessionId } = useParams();
-  const navigate = useNavigate();
+  const { sessionId } = useParams()
+  const navigate = useNavigate()
 
-  const studioData = useSelector((state) => state.studio.studioJoinData);
-  const session = useSelector((state) => state.session.session);
-  const localPeer = useHMSStore(selectLocalPeer);
-  const peers = useHMSStore(selectPeers);
-  const isConnected = useHMSStore(selectIsConnectedToRoom);
-  const hmsMessages = useHMSStore(selectHMSMessages);
+  const studioData = useSelector((state) => state.studio.studioJoinData)
+  const session = useSelector((state) => state.session.session)
+  const localPeer = useHMSStore(selectLocalPeer)
+  const peers = useHMSStore(selectPeers)
+  const isConnected = useHMSStore(selectIsConnectedToRoom)
+  const hmsMessages = useHMSStore(selectHMSMessages)
 
-  const [showSlider, setShowSlider] = useState(false);
-  const [volume, setVolume] = useState(50);
-  const [showConfirmModal, setShowConfirmModal] = useState(false); // State for the confirmation modal
+  const [showSlider, setShowSlider] = useState(false)
+  const [volume, setVolume] = useState(50)
+  const [showConfirmModal, setShowConfirmModal] = useState(false) // State for the confirmation modal
 
-  const previousMessageCount = useRef(0);
+  const previousMessageCount = useRef(0)
 
   const { isLocalAudioEnabled, isLocalVideoEnabled, toggleAudio, toggleVideo } =
-    useAVToggle();
+    useAVToggle()
 
-  const role = studioData?.role || 'guest';
-  const userName = studioData?.userName || 'User';
+  const role = studioData?.role || 'guest'
+  const userName = studioData?.userName || 'User'
   const {
     isRecording,
     startRecording,
@@ -49,9 +49,9 @@ const StudioPage = () => {
     uploadedChunkUrls,
     isUploading, // Get isUploading state from hook
     uploadProgress, // Get uploadProgress state from hook
-  } = useLocalRecorder(sessionId, role);
+  } = useLocalRecorder(sessionId, role)
 
-  const hmsActions = useHMSActions();
+  const hmsActions = useHMSActions()
 
   // Effect to handle joining the room
   useEffect(() => {
@@ -62,130 +62,133 @@ const StudioPage = () => {
           const stream = await navigator.mediaDevices.getUserMedia({
             video: true,
             audio: true,
-          });
+          })
           // Stop tracks immediately after checking permissions, as useLocalRecorder will get its own stream
-          stream.getTracks().forEach((track) => track.stop());
-          console.log('✅ Got user media permissions.');
+          stream.getTracks().forEach((track) => track.stop())
+          console.log('✅ Got user media permissions.')
 
           const token =
             role === 'host'
               ? import.meta.env.VITE_100MS_HOST_TOKEN
-              : import.meta.env.VITE_100MS_GUEST_TOKEN;
+              : import.meta.env.VITE_100MS_GUEST_TOKEN
 
           await hmsActions.join({
             userName,
             authToken: token,
             settings: { isAudioMuted: false, isVideoMuted: false },
-          });
+          })
 
-          console.log('✅ Joined room successfully');
+          console.log('✅ Joined room successfully')
         } catch (err) {
-          console.error('❌ Failed to join room:', err);
-          toast.error(`Join failed: ${err.message}`, { theme: 'dark' });
+          console.error('❌ Failed to join room:', err)
+          toast.error(`Join failed: ${err.message}`, { theme: 'dark' })
         }
-      };
-      joinRoom();
+      }
+      joinRoom()
     }
-  }, [isConnected, hmsActions, role, sessionId, userName]);
+  }, [isConnected, hmsActions, role, sessionId, userName])
 
   // Effect to listen for recording control messages
   useEffect(() => {
     if (hmsMessages.length > previousMessageCount.current) {
-      const newMessages = hmsMessages.slice(previousMessageCount.current);
-      previousMessageCount.current = hmsMessages.length;
+      const newMessages = hmsMessages.slice(previousMessageCount.current)
+      previousMessageCount.current = hmsMessages.length
 
       newMessages.forEach((msg) => {
+        if (localPeer?.id === msg.sender && localPeer?.roleName === 'host') {
+          return
+        }
         try {
-          const data = JSON.parse(msg.message);
+          const data = JSON.parse(msg.message)
 
           // Only guests should handle messages (host triggers directly and also receives broadcast)
           // The host also calls startRecording/stopRecording directly, so this ensures guests react.
           if (data.type === 'start-recording') {
-            startRecording();
+            startRecording()
           } else if (data.type === 'stop-recording') {
-            stopRecording();
+            stopRecording()
           }
         } catch (err) {
-          console.error('Invalid JSON in message:', msg.message, err);
+          console.error('Invalid JSON in message:', msg.message, err)
         }
-      });
+      })
     }
-  }, [hmsMessages, localPeer, startRecording, stopRecording]);
-
+  }, [hmsMessages, localPeer, startRecording, stopRecording])
 
   // Effect for browser tab close/refresh warning
   useEffect(() => {
     const handleBeforeUnload = (event) => {
-      if (isUploading || isRecording) { // Warn if recording or actively uploading
-        event.preventDefault();
-        event.returnValue = ''; // Required for Chrome to show confirmation
-        return 'Recording or uploading in progress. Are you sure you want to leave? Your data may be lost.';
+      if (isUploading || isRecording) {
+        // Warn if recording or actively uploading
+        event.preventDefault()
+        event.returnValue = '' // Required for Chrome to show confirmation
+        return 'Recording or uploading in progress. Are you sure you want to leave? Your data may be lost.'
       }
-    };
+    }
 
-    window.addEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener('beforeunload', handleBeforeUnload)
 
     return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-    };
-  }, [isUploading, isRecording]); // Depend on isUploading and isRecording
+      window.removeEventListener('beforeunload', handleBeforeUnload)
+    }
+  }, [isUploading, isRecording]) // Depend on isUploading and isRecording
 
   // Effect for leaving the room on component unmount
   useEffect(() => {
     return () => {
       if (isConnected) {
-        hmsActions.leave();
-        console.log('🧹 Left room on unmount');
+        hmsActions.leave()
+        console.log('🧹 Left room on unmount')
       }
-    };
-  }, [hmsActions, isConnected]);
+    }
+  }, [hmsActions, isConnected])
 
   // Host-initiated recording actions
   const handleStartRecording = async () => {
     if (localPeer?.roleName === 'host') {
       await hmsActions.sendBroadcastMessage(
         JSON.stringify({ type: 'start-recording' })
-      );
-      startRecording(); // Host starts their own local recording
+      )
+      startRecording() // Host starts their own local recording
     }
-  };
+  }
 
   const handleStopRecording = async () => {
     if (localPeer?.roleName === 'host') {
       await hmsActions.sendBroadcastMessage(
         JSON.stringify({ type: 'stop-recording' })
-      );
-      stopRecording(); // Host stops their own local recording
+      )
+      stopRecording() // Host stops their own local recording
     }
-  };
+  }
 
   // Function to handle the actual end call logic (after confirmation)
   const confirmEndCall = async () => {
-    setShowConfirmModal(false); // Close the modal
+    setShowConfirmModal(false) // Close the modal
     try {
       if (role === 'host') {
-        await hmsActions.endRoom(true, 'Host ended the call');
-        navigate('/my-studios'); // Navigate after host ends room
+        await hmsActions.endRoom(true, 'Host ended the call')
+        navigate('/my-studios') // Navigate after host ends room
       } else {
-        await hmsActions.leave();
-        navigate('/'); // Navigate after guest leaves
+        await hmsActions.leave()
+        navigate('/') // Navigate after guest leaves
       }
     } catch (err) {
-      console.error('Error ending call:', err);
-      toast.error(`Error ending call: ${err.message}`, { theme: 'dark' });
+      console.error('Error ending call:', err)
+      toast.error(`Error ending call: ${err.message}`, { theme: 'dark' })
     }
-  };
+  }
 
   // Modified handleEndCall to include warning
   const handleEndCall = () => {
     if (isUploading) {
       // If uploading, show confirmation modal
-      setShowConfirmModal(true);
+      setShowConfirmModal(true)
     } else {
       // Otherwise, proceed directly
-      confirmEndCall();
+      confirmEndCall()
     }
-  };
+  }
 
   return (
     <div className='flex flex-col h-screen overflow-hidden bg-[#111111] text-white font-sans'>
@@ -242,23 +245,24 @@ const StudioPage = () => {
 
       {/* Confirmation Modal */}
       {showConfirmModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
-          <div className="bg-[#1F1F1F] p-6 rounded-lg shadow-xl text-white max-w-sm mx-auto">
-            <h3 className="text-lg font-semibold mb-4">Upload in Progress!</h3>
-            <p className="mb-6">
-              A recording upload is still in progress ({uploadProgress}%). If you leave now, this upload may be interrupted and lost.
-              Are you sure you want to end the call?
+        <div className='fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50'>
+          <div className='bg-[#1F1F1F] p-6 rounded-lg shadow-xl text-white max-w-sm mx-auto'>
+            <h3 className='text-lg font-semibold mb-4'>Upload in Progress!</h3>
+            <p className='mb-6'>
+              A recording upload is still in progress ({uploadProgress}%). If
+              you leave now, this upload may be interrupted and lost. Are you
+              sure you want to end the call?
             </p>
-            <div className="flex justify-end space-x-4">
+            <div className='flex justify-end space-x-4'>
               <button
                 onClick={() => setShowConfirmModal(false)}
-                className="px-4 py-2 rounded-lg bg-gray-600 hover:bg-gray-700 text-white"
+                className='px-4 py-2 rounded-lg bg-gray-600 hover:bg-gray-700 text-white'
               >
                 Cancel
               </button>
               <button
                 onClick={confirmEndCall}
-                className="px-4 py-2 rounded-lg bg-[#EE4C4D] text-white"
+                className='px-4 py-2 rounded-lg bg-[#EE4C4D] text-white'
               >
                 End Call Anyway
               </button>
@@ -267,13 +271,13 @@ const StudioPage = () => {
         </div>
       )}
     </div>
-  );
-};
+  )
+}
 
 // VideoTile Component (from previous version, included for completeness)
 const VideoTile = ({ peer, role, userName }) => {
-  const { videoRef } = useVideo({ trackId: peer.videoTrack });
-  const isVideoOff = !peer.videoTrack || peer.isVideoEnabled === false;
+  const { videoRef } = useVideo({ trackId: peer.videoTrack })
+  const isVideoOff = !peer.videoTrack || peer.isVideoEnabled === false
 
   return (
     <div className='relative w-full h-full min-h-0 bg-gray-900 rounded-xl overflow-hidden flex items-center justify-center'>
@@ -282,7 +286,7 @@ const VideoTile = ({ peer, role, userName }) => {
         autoPlay
         muted={peer.isLocal}
         playsInline
-        className={`w-full h-full min-h-full object-cover ${peer.isLocal ? 'transform scale-x-[-1]' : ''}`}
+        className={`w-full h-full min-h-full object-cover transform scale-x-[-1]`}
       />
 
       {isVideoOff && (
@@ -315,7 +319,7 @@ const VideoTile = ({ peer, role, userName }) => {
         {peer.name} ({peer.roleName}) {peer.isLocal && '(You)'}
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default StudioPage;
+export default StudioPage

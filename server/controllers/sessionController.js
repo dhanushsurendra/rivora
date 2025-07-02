@@ -218,9 +218,38 @@ const getSessionById = async (req, res) => {
   }
 }
 
+const uploadChunk = async (req, res) => {
+  const { sessionId } = req.params;
+  const { role, url } = req.body;
+
+  if (!['host', 'guest'].includes(role)) {
+    return res.status(400).json({ error: 'Invalid role' });
+  }
+
+  if (!url) {
+    return res.status(400).json({ error: 'Chunk URL is required' });
+  }
+
+  try {
+    const session = await Session.findByIdAndUpdate(
+      sessionId,
+      { $push: { [`videoChunks.${role}`]: url } },
+      { new: true }
+    );
+
+    if (!session) return res.status(404).json({ error: 'Session not found' });
+
+    res.status(200).json({ message: 'Chunk uploaded', session });
+  } catch (error) {
+    console.error('Upload chunk failed:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
 module.exports = {
   sendInvitation,
   createSession,
   getMySessions,
   getSessionById,
+  uploadChunk,
 }

@@ -9,7 +9,6 @@ const RecordButton = ({
 }) => {
   const [seconds, setSeconds] = useState(0)
   const role = useSelector((state) => state.studio.studioJoinData.role)
-  console.log('role', role)
 
   useEffect(() => {
     let timer
