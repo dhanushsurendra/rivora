@@ -395,23 +395,3 @@ async function processSession(sessionId) {
 module.exports = {
   processSession,
 }
-
-// // Test execution (only runs if this file is executed directly)
-// if (require.main === module) {
-//   ;(async () => {
-//     const testSessionId = '686527956a9c98d1cde73927' // Replace with your actual sessionId
-//     try {
-//       console.log('Starting processing...')
-//       const finalUrl = await processSession(testSessionId)
-//       console.log(
-//         '✅ Test completed successfully. Concatenated Host video:',
-//         finalUrl
-//       ) // Updated log message
-//     } catch (e) {
-//       console.error('❌ Test session failed:', e.message)
-//       if (e.http_code) {
-//         console.error('Cloudinary API HTTP Code: ${e.http_code}')
-//       }
-//     }
-//   })()
-// }
