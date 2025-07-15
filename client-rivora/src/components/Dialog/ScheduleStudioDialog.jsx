@@ -1,17 +1,14 @@
 import { useState, useEffect } from 'react'
-import Button from '../Button/Button' // Assuming your Button component exists
+import Button from '../Button/Button' 
 
 const ScheduleStudioDialog = ({ isOpen = true, onClose, onSubmit }) => {
-  // Helper to get today's date in YYYY-MM-DD format
   const getTodayDateString = () => {
     const today = new Date();
     return today.toISOString().split('T')[0];
   };
 
-  // Helper to get current time in HH:MM format
   const getCurrentTimeString = () => {
     const now = new Date();
-    // Pad single digit hours/minutes with a leading zero
     const hours = String(now.getHours()).padStart(2, '0');
     const minutes = String(now.getMinutes()).padStart(2, '0');
     return `${hours}:${minutes}`;
@@ -20,31 +17,24 @@ const ScheduleStudioDialog = ({ isOpen = true, onClose, onSubmit }) => {
   const [date, setDate] = useState(getTodayDateString());
   const [time, setTime] = useState(getCurrentTimeString());
 
-  // State to hold the minimum time allowed for the time input
   const [minTime, setMinTime] = useState('00:00');
 
-  // Effect to update minTime based on selected date
   useEffect(() => {
     const todayDate = getTodayDateString();
     if (date === todayDate) {
-      // If the selected date is today, set min time to current time
       setMinTime(getCurrentTimeString());
-      // Additionally, if the currently selected time is in the past for today,
-      // update it to the current time to prevent invalid selection.
       if (time < getCurrentTimeString()) {
         setTime(getCurrentTimeString());
       }
     } else {
-      // If the selected date is in the future, allow all times from 00:00
       setMinTime('00:00');
     }
-  }, [date, time]); // Re-run when date or time changes
+  }, [date, time]); 
 
   if (!isOpen) {
     return null
   }
 
-  // Prevent form submission from reloading the page
   const handleSubmit = (e) => {
     e.preventDefault();
     onSubmit({ date, time });
@@ -130,7 +120,7 @@ const ScheduleStudioDialog = ({ isOpen = true, onClose, onSubmit }) => {
             <Button
               text={'Schedule'}
               className='hover:bg-[#6f4ed1]'
-              type='submit' // This will trigger the form's onSubmit
+              type='submit' 
             />
           </div>
         </form>

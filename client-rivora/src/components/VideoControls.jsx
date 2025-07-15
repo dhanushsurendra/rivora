@@ -1,10 +1,9 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 
 import { ImPhoneHangUp } from 'react-icons/im'
-import { LuScreenShare, LuVideoOff } from 'react-icons/lu'
+import { LuVideoOff } from 'react-icons/lu'
 import { HiOutlineSpeakerWave, HiOutlineSpeakerXMark } from 'react-icons/hi2'
 import { IoMicOff, IoMicOutline, IoVideocamOutline } from 'react-icons/io5'
-import { GoPeople } from 'react-icons/go'
 import RecordButton from './Button/RecordButton'
 import VideoControlButton from './Button/VideoControlButton'
 import ChatToggleButton from './Chat/ChatToggleButton'
@@ -12,19 +11,13 @@ import ChatToggleButton from './Chat/ChatToggleButton'
 import { useAVToggle } from "@100mslive/react-sdk";
 
 const VideoControls = ({
-  userRole,
   isRecording,
-  isAudioMuted,
-  isVideoMuted,
   showSlider,
   volume,
   handleStartRecording,
   handleStopRecording,
   setVolume,
   toggleSlider,
-  handleAudioMuteToggle,
-  handleVideoMuteToggle,
-  handleShareScreenToggle,
   handleEndCall,
 }) => {
 
@@ -44,7 +37,6 @@ const VideoControls = ({
   return (
     <footer className='flex justify-between px-6 py-3 bg-[#111111] z-10'>
       <div className='flex items-center space-x-2'>
-        {/* dummy left side */}
         <button
           className={`p-2 rounded-lg w-10 h-10 bg-transparent`}
           title='Open Chat'
@@ -63,7 +55,6 @@ const VideoControls = ({
           handleStartRecording={handleStartRecording}
           handleStopRecording={handleStopRecording}
         />
-        {/* Mute/Unmute Audio Button */}
         <VideoControlButton
           iconOn={<IoMicOff className='w-6 h-6' />}
           iconOff={<IoMicOutline className='w-6 h-6' />}
@@ -73,7 +64,6 @@ const VideoControls = ({
           isToggled={!isLocalAudioEnabled}
         />
 
-        {/* Mute/Unmute Video But ton */}
         <VideoControlButton
           iconOn={<LuVideoOff className='w-6 h-6' />}
           iconOff={<IoVideocamOutline className='w-6 h-6' />}

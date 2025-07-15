@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { IoSend } from 'react-icons/io5'
 import { GoX } from 'react-icons/go'
 
@@ -18,7 +18,6 @@ const ChatPanel = ({ isOpen, handleChatToggle }) => {
   const [newMessage, setNewMessage] = useState('')
   const messagesEndRef = useRef(null)
 
-  // Load saved messages from localStorage on first mount
   useEffect(() => {
     const saved = localStorage.getItem('chatMessages')
     if (saved) {
@@ -30,7 +29,6 @@ const ChatPanel = ({ isOpen, handleChatToggle }) => {
     }
   }, [])
 
-  // Convert HMS messages to readable format
   const liveMessages = hmsMessages
     .filter((msg) => {
       try {
@@ -42,7 +40,6 @@ const ChatPanel = ({ isOpen, handleChatToggle }) => {
     })
     .map((msg) => {
       let parsedText = msg.message
-      console.log(parsedText)
       try {
         const data = JSON.parse(msg.message)
         if (data.text) parsedText = data.text
@@ -62,7 +59,6 @@ const ChatPanel = ({ isOpen, handleChatToggle }) => {
       }
     })
 
-  // Merge stored and live messages
   const allMessages = [
     ...storedMessages,
     ...liveMessages.filter(
@@ -70,7 +66,6 @@ const ChatPanel = ({ isOpen, handleChatToggle }) => {
     ),
   ]
 
-  // Save only new messages to localStorage
   useEffect(() => {
     const saved = JSON.parse(localStorage.getItem('chatMessages')) || []
     const newOnes = allMessages.filter(
@@ -83,7 +78,6 @@ const ChatPanel = ({ isOpen, handleChatToggle }) => {
     }
   }, [hmsMessages])
 
-  // Scroll to bottom when new messages come in
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [allMessages])
@@ -102,7 +96,6 @@ const ChatPanel = ({ isOpen, handleChatToggle }) => {
         JSON.stringify(messagePayload),
         'chat'
       )
-      console.log('Message sent:', messagePayload.text)
     } catch (err) {
       console.error('Failed to send message:', err)
     }

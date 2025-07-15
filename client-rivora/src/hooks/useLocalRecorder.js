@@ -18,11 +18,9 @@ const useLocalRecording = (sessionId, userRole) => {
   // This function records a single chunk and then recursively calls itself
   // if the recordingActiveRef flag is still true.
   const recordChunk = useCallback(async () => {
-    console.log(`[${userRole}] >> recordChunk triggered`);
 
     // Stop condition for the recursive loop
     if (!recordingActiveRef.current || !mediaStreamRef.current) {
-      console.log(`[${userRole}] >> Recording stopped or stream unavailable, terminating loop.`);
       return;
     }
 
@@ -35,7 +33,6 @@ const useLocalRecording = (sessionId, userRole) => {
         mimeType: "video/webm;codecs=vp8,opus", // You can experiment with other MIME types here
       });
       currentRecorderRef.current = recorder; // Store the new recorder instance
-      console.log(`[${userRole}] 🎥 MediaRecorder created for chunk ${currentChunkNum} with MIME type: ${recorder.mimeType}`);
     } catch (error) {
       console.error(`[${userRole}] ❌ Failed to create MediaRecorder for chunk ${currentChunkNum}:`, error);
       // If MediaRecorder creation fails, stop the entire recording process
@@ -54,7 +51,6 @@ const useLocalRecording = (sessionId, userRole) => {
 
     // Event handler for when data is available from the recorder
     recorder.ondataavailable = (e) => {
-      console.log(`[${userRole}] 📦 Data available for chunk ${currentChunkNum}, size: ${e.data.size} bytes`);
       if (e.data.size > 0) {
         chunks.push(e.data);
       }
@@ -62,7 +58,6 @@ const useLocalRecording = (sessionId, userRole) => {
 
     // Event handler for when the recorder stops
     recorder.onstop = async () => { // Made onstop async to handle fetch
-      console.log(`[${userRole}] MediaRecorder stopped for chunk ${currentChunkNum}. State: ${recorder.state}`);
       const blob = new Blob(chunks, { type: recorder.mimeType }); // Create a Blob from collected chunks
 
       // Clear the currentRecorderRef once this recorder has stopped
@@ -111,7 +106,6 @@ const useLocalRecording = (sessionId, userRole) => {
         setUploadProgress(0); // Reset progress
         if (xhr.status >= 200 && xhr.status < 300) {
           const data = JSON.parse(xhr.responseText);
-          console.log(`[${userRole}] ✅ Uploaded chunk ${currentChunkNum}: ${data.secure_url}`);
           setUploadedChunkUrls((prev) => [...prev, data.secure_url]); // Store the URL
         } else {
           const errorData = JSON.parse(xhr.responseText);
@@ -126,7 +120,6 @@ const useLocalRecording = (sessionId, userRole) => {
       xhr.onerror = () => {
         setIsUploading(false); // Upload finished (error)
         setUploadProgress(0); // Reset progress
-        console.error(`[${userRole}] ❌ Network error during upload for chunk ${currentChunkNum}.`);
       };
 
       xhr.send(formData); // Send the FormData
@@ -143,10 +136,8 @@ const useLocalRecording = (sessionId, userRole) => {
 
     // Start recording the current chunk
     recorder.start();
-    console.log(`[${userRole}] ⏺️ Recording chunk ${currentChunkNum}`);
     // Stop recording after 5 seconds
     setTimeout(() => {
-      console.log(`[${userRole}] Attempting to stop recorder for chunk ${currentChunkNum}. Current state: ${recorder.state}`);
       if (recorder.state === "recording") { // Only stop if it's still actively recording
         recorder.stop();
       } else {
@@ -169,7 +160,6 @@ const useLocalRecording = (sessionId, userRole) => {
         audio: true,
       });
 
-      console.log('[${userRole}] 🎤 Media stream started');
       setIsRecording(true); // Update public state
       recordingActiveRef.current = true; // Set internal flag to true to start the loop
       chunkCounterRef.current = 0; // Reset chunk counter for a new recording session
@@ -195,7 +185,7 @@ const useLocalRecording = (sessionId, userRole) => {
   // Function to stop the recording process
   const stopRecording = useCallback(() => {
     if (!recordingActiveRef.current) { // Check internal ref for active recording
-      console.warn('[${userRole}] ⚠️ No recording in progress to stop');
+      console.warn('[${userRole}] No recording in progress to stop');
       return;
     }
 
@@ -204,7 +194,6 @@ const useLocalRecording = (sessionId, userRole) => {
 
     // Immediately stop the currently active MediaRecorder instance
     if (currentRecorderRef.current && currentRecorderRef.current.state === "recording") {
-      console.log('[${userRole}] 🛑 Stopping current MediaRecorder instance immediately.');
       currentRecorderRef.current.stop();
       currentRecorderRef.current = null; // Clear the ref after stopping
     } else {
@@ -215,9 +204,7 @@ const useLocalRecording = (sessionId, userRole) => {
     if (mediaStreamRef.current) {
       mediaStreamRef.current.getTracks().forEach((track) => track.stop());
       mediaStreamRef.current = null;
-      console.log('[${userRole}] 🛑 Media stream tracks stopped.');
     }
-    console.log('[${userRole}] 🛑 Recording stopped by user.');
   }, [userRole]);
 
   // Cleanup effect: Ensures media tracks are stopped and loop is terminated if component unmounts
@@ -235,16 +222,15 @@ const useLocalRecording = (sessionId, userRole) => {
       setIsRecording(false); // Ensure state is reset
       setIsUploading(false); // Ensure uploading state is reset on unmount
       setUploadProgress(0); // Ensure progress is reset on unmount
-      console.log('[${userRole}] 🧹 Cleaned up recording resources on unmount.');
     };
-  }, [userRole]); // Dependency: userRole for logging in cleanup
+  }, [userRole]); 
 
   return {
     startRecording,
     stopRecording,
     isRecording,
-    isUploading, // Return the isUploading state
-    uploadProgress, // NEW: Return the uploadProgress state
+    isUploading, 
+    uploadProgress, 
     uploadedChunkUrls,
   };
 }

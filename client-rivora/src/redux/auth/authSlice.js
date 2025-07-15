@@ -32,11 +32,11 @@ const authSlice = createSlice({
 })
 
 export const saveUserToLocalStorage = (user) => {
-  localStorage.setItem('user', JSON.stringify(user))
+  localStorage.clear()
 }
 
 export const removeUserFromLocalStorage = () => {
-  localStorage.removeItem('user')
+  localStorage.clear()
 }
 
 export const { authStart, authSuccess, authFailure, logout } = authSlice.actions

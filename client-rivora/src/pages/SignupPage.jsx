@@ -59,8 +59,6 @@ const SignupPage = () => {
   const loading = useSelector((state) => state.auth.loading)
 
   const handleSignupSubmit = async (data) => {
-    console.log('Signing up in with:', data)
-    console.log('Logging in with:', data)
     dispatch(authStart())
 
     try {
@@ -99,7 +97,6 @@ const SignupPage = () => {
         )
 
         const googleUser = await res.json()
-        console.log('Google user info:', googleUser)
 
         const response = await axiosInstance.post('/auth/google', {
           name: googleUser.name,

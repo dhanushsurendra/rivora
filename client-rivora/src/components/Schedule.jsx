@@ -32,7 +32,6 @@ const Schedule = ({ canEdit, scheduledDetails, onSubmit }) => {
   const handleRemoveSchedule = () => {
     // Reset the scheduled state
     setIsScheduled(false)
-    console.log('Schedule removed.')
   }
 
   // Helper function to format date for display (e.g., "Tuesday, February 28th")

@@ -68,11 +68,8 @@ const HomePage = () => {
   const popoverRef = useRef(null) // Ref for the popover itself
 
   // Dummy user data (replace with actual user data from Redux/context if available)
-  const currentUser = {
-    name: 'Dhanush',
-    email: 'dhanush@gmail.com',
-  }
-
+  const currentUser = useSelector((state) => state.auth.user);
+  
   useEffect(() => {
     const handleScroll = () => {
       if (window.scrollY > 50) {

@@ -1,20 +1,24 @@
 import { createSlice } from '@reduxjs/toolkit';
 
-// --- VERIFY THIS PART CAREFULLY ---
 const initialState = {
-  session: null, // <--- This MUST be here, initialized to null or an empty object
+  session: null, 
+  token: null,
   loading: false,
   error: null,
 };
 
 const sessionSlice = createSlice({
   name: 'session',
-  initialState, // Make sure 'initialState' is passed correctly here
+  initialState, 
   reducers: {
     setSession: (state, action) => {
       state.session = action.payload;
       state.loading = false;
       state.error = null;
+    },
+    setToken: (state, action) => {
+      const token = action.payload
+      state.token = token;
     },
     setLoading: (state, action) => {
       state.loading = action.payload;
@@ -23,17 +27,14 @@ const sessionSlice = createSlice({
       state.error = action.payload;
       state.loading = false;
     },
-    // --- Your clearSession reducer ---
     clearSession: (state) => {
-      // Add a console.log here to inspect the 'state' object when the error occurs
-      console.log("State received by clearSession:", state);
-      state.session = null; // The error points to this line
+      state.session = null; 
       state.loading = false;
       state.error = null;
+      state.token = null; 
     },
   },
 });
 
-// Ensure clearSession is exported here
-export const { setSession, setLoading, setError, clearSession } = sessionSlice.actions;
+export const { setSession, setLoading, setError, clearSession, setToken } = sessionSlice.actions;
 export default sessionSlice.reducer;

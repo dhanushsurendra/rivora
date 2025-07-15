@@ -18,22 +18,19 @@ import Header from '../components/PodcastHeader'
 import useLocalRecorder from '../hooks/useLocalRecorder'
 import { toast, ToastContainer } from 'react-toastify'
 
-// Import icons for VideoTile
-import { IoMicOffOutline } from 'react-icons/io5'
-import { IoVideocamOffOutline } from 'react-icons/io5'
-
 const StudioPage = () => {
   const { sessionId } = useParams()
   const navigate = useNavigate()
 
   const studioData = useSelector((state) => state.studio.studioJoinData)
   const session = useSelector((state) => state.session.session)
+  const sessionToken = useSelector((state) => state.session.token)
   const localPeer = useHMSStore(selectLocalPeer)
   const peers = useHMSStore(selectPeers)
   const isConnected = useHMSStore(selectIsConnectedToRoom)
   const hmsMessages = useHMSStore(selectHMSMessages)
   const [recordingStopped, setRecordingStopped] = useState(false)
-  const hasBroadcastedRef = useRef(false) // Ref to prevent multiple guest 'upload-complete' broadcasts
+  const hasBroadcastedRef = useRef(false) 
 
   const [showSlider, setShowSlider] = useState(false)
   const [volume, setVolume] = useState(50)
@@ -54,22 +51,17 @@ const StudioPage = () => {
 
   const hmsActions = useHMSActions()
 
-  // Ref to track the number of messages already processed
-  const processedMessageCountRef = useRef(0) // <--- New/Corrected usage for message processing
+  const processedMessageCountRef = useRef(0) 
 
-  // Function to trigger host upload (memoized for stability)
   const triggerHostUpload = useCallback(async (currentSessionId) => {
     if (!currentSessionId) {
-      console.warn('❌ triggerHostUpload: Session ID is missing.')
       return
     }
 
     if (isUploading) {
-      console.warn('❌ triggerHostUpload: uploading chunks.')
       return
     }
 
-    console.log('📤 Triggering host upload for session:', currentSessionId)
     try {
       toast.success('Video merging process initiated on server!', {
         theme: 'dark',
@@ -77,16 +69,13 @@ const StudioPage = () => {
       await axiosInstance.post('/session/merge-videos', {
         sessionId: currentSessionId,
       })
-      console.log('✅ Merge video request sent successfully.')
     } catch (error) {
-      console.error('❌ Error sending merge video request:', error)
       toast.error(`Failed to initiate merge: ${error.message}`, {
         theme: 'dark',
       })
     }
   }, [])
 
-  // Effect to handle joining the room
   useEffect(() => {
     if (!isConnected) {
       const joinRoom = async () => {
@@ -96,15 +85,10 @@ const StudioPage = () => {
             audio: true,
           })
           stream.getTracks().forEach((track) => track.stop())
-          console.log('✅ Got user media permissions.')
 
-          const token =
-            role === 'host'
-              ? import.meta.env.VITE_100MS_HOST_TOKEN
-              : import.meta.env.VITE_100MS_GUEST_TOKEN
+          const token = sessionToken
 
           if (!token) {
-            console.error('❌ 100MS Token is missing for role:', role)
             toast.error('Failed to join: Missing authentication token.', {
               theme: 'dark',
             })
@@ -117,9 +101,7 @@ const StudioPage = () => {
             settings: { isAudioMuted: false, isVideoMuted: false },
           })
 
-          console.log('✅ Joined room successfully as', role, ':', userName)
         } catch (err) {
-          console.error('❌ Failed to join room:', err)
           toast.error(`Join failed: ${err.message}`, { theme: 'dark' })
         }
       }
@@ -127,79 +109,46 @@ const StudioPage = () => {
     }
   }, [isConnected, hmsActions, role, userName])
 
-  // Effect to listen for recording control messages from other peers
   useEffect(() => {
-    // Process only new messages since the last render
     const newMessages = hmsMessages.slice(processedMessageCountRef.current)
 
     if (newMessages.length === 0) {
-      return // No new messages to process
+      return 
     }
 
     newMessages.forEach((latestMessage) => {
-      // Safeguard: Ignore messages from self if they are intended for remote control.
       if (localPeer?.id === latestMessage.sender) {
-        console.log('Ignoring own message:', latestMessage.message)
-        return // Skip processing this message
+        return 
       }
 
       try {
         const data = JSON.parse(latestMessage.message)
-        console.log(
-          `Received message (type: ${data.type}) from ${
-            latestMessage.senderName
-          } (${latestMessage.sender}) at ${new Date(latestMessage.time)}`
-        )
-        console.log('Message data:', data)
 
         if (data.type === 'start-recording') {
           if (!isRecording) {
-            console.log(
-              'Host/Guest: Received start-recording. Starting local recording...'
-            )
             startRecording()
-          } else {
-            console.log(
-              'Host/Guest: Received start-recording but already recording.'
-            )
+            if (role === 'guest') {
+              toast.info('Recording started by host.', { theme: 'dark' }) 
+            }
           }
         } else if (data.type === 'stop-recording') {
           if (isRecording) {
-            console.log(
-              'Host/Guest: Received stop-recording. Stopping local recording...'
-            )
             stopRecording()
             if (role === 'guest') {
-              console.log('Guest: Setting recordingStopped flag.')
-              setRecordingStopped(true) // Trigger guest upload broadcast after local upload finishes
+              setRecordingStopped(true) 
             }
-          } else {
-            console.log(
-              'Host/Guest: Received stop-recording but not recording.'
-            )
-          }
+          } 
         } else if (data.type === 'upload-complete') {
           if (role === 'host') {
-            // Only host processes 'upload-complete' messages
-            console.log('Host: Received upload-complete message from a guest.')
-            triggerHostUpload(sessionId) // Use the useCallback version
-          } else {
-            console.log(
-              'Guest: Received upload-complete (ignoring, as I am guest).'
-            )
-          }
+            triggerHostUpload(sessionId) 
+          } 
         }
       } catch (err) {
-        console.error(
-          'Invalid message format or processing error:',
-          err,
-          'Message:',
-          latestMessage.message
-        )
+        toast.error(
+          `Failed to process message: ${latestMessage.message}`,)
       }
     })
 
-    // Update the ref after processing all new messages
     processedMessageCountRef.current = hmsMessages.length
   }, [
     hmsMessages,
@@ -212,23 +161,14 @@ const StudioPage = () => {
     sessionId,
   ])
 
-  // Effect for GUEST to broadcast 'upload-complete'
   useEffect(() => {
-    console.log('Guest upload broadcast effect:', {
-      recordingStopped,
-      isUploading,
-      role,
-      hasBroadcasted: hasBroadcastedRef.current,
-    })
+
     if (
       recordingStopped &&
       !isUploading &&
       role === 'guest' &&
       !hasBroadcastedRef.current
     ) {
-      console.log(
-        '📤 Guest: All conditions met. Sending upload-complete broadcast...'
-      )
       hmsActions.sendBroadcastMessage(
         JSON.stringify({ type: 'upload-complete', userName, sessionId })
       )
@@ -238,7 +178,6 @@ const StudioPage = () => {
     }
   }, [isUploading, recordingStopped, role, hmsActions, userName, sessionId])
 
-  // Effect for browser tab close/refresh warning
   useEffect(() => {
     const handleBeforeUnload = (event) => {
       if (isUploading || isRecording) {
@@ -255,12 +194,10 @@ const StudioPage = () => {
     }
   }, [isUploading, isRecording])
 
-  // Effect for leaving the room on component unmount
   useEffect(() => {
     return () => {
       if (isConnected) {
         hmsActions.leave()
-        console.log('🧹 Left room on unmount')
       }
     }
   }, [hmsActions, isConnected])
@@ -268,25 +205,19 @@ const StudioPage = () => {
   // Host-initiated recording actions
   const handleStartRecording = async () => {
     if (localPeer?.roleName === 'host') {
-      console.log('Host: Initiating start recording...')
       await hmsActions.sendBroadcastMessage(
         JSON.stringify({ type: 'start-recording' })
       )
       startRecording()
-    } else {
-      console.log('Not host, cannot start recording from UI.')
     }
   }
 
   const handleStopRecording = async () => {
     if (localPeer?.roleName === 'host') {
-      console.log('Host: Initiating stop recording...')
       await hmsActions.sendBroadcastMessage(
         JSON.stringify({ type: 'stop-recording' })
       )
       stopRecording()
-    } else {
-      console.log('Not host, cannot stop recording from UI.')
     }
   }
 
@@ -295,22 +226,18 @@ const StudioPage = () => {
     setShowConfirmModal(false)
     try {
       if (role === 'host') {
-        console.log('Host: Ending room...')
         await hmsActions.endRoom(true, 'Host ended the call')
         navigate('/my-studios')
       } else {
-        console.log('Guest: Leaving room...')
         await hmsActions.leave()
         navigate('/')
       }
       toast.info('Call ended.', { theme: 'dark' })
     } catch (err) {
-      console.error('Error ending call:', err)
       toast.error(`Error ending call: ${err.message}`, { theme: 'dark' })
     }
   }
 
-  // Modified handleEndCall to include warning
   const handleEndCall = () => {
     if (isUploading) {
       setShowConfirmModal(true)
@@ -432,19 +359,6 @@ const VideoTile = ({ peer }) => {
         </div>
       )}
 
-      {/* Top Right Icons (Mic and Video - visible when off) */}
-      <div className='absolute top-4 right-4 flex gap-2'>
-        {!peer.isAudioEnabled && (
-          <div className='bg-black/70 p-2 rounded-full text-white flex items-center justify-center'>
-            <IoMicOffOutline className='h-5 w-5' />
-          </div>
-        )}
-        {!peer.isVideoEnabled && (
-          <div className='bg-black/70 p-2 rounded-full text-white flex items-center justify-center'>
-            <IoVideocamOffOutline className='h-5 w-5' />
-          </div>
-        )}
-      </div>
 
       {/* Name and role tag - Bottom Left */}
       <div className='absolute bottom-4 left-4 text-white text-sm px-4 py-1 rounded-full bg-black/70'>

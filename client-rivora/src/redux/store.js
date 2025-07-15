@@ -1,4 +1,3 @@
-// src/store.js
 import { configureStore, combineReducers } from '@reduxjs/toolkit'
 import authReducer from './auth/authSlice'
 import sessionReducer from './session/sessionSlice'
@@ -13,23 +12,20 @@ const persistConfig = {
   storage,
 }
 
-// Combine your reducers
 const appReducer = combineReducers({
   auth: authReducer,
   session: sessionReducer,
   studio: studioReducer,
 })
 
-// Root reducer with RESET_STORE logic
 const rootReducer = (state, action) => {
   if (action.type === 'RESET_STORE') {
-    storage.removeItem('persist:root') // Clear localStorage persisted state
-    return appReducer(undefined, action) // Reset Redux state
+    storage.removeItem('persist:root') 
+    return appReducer(undefined, action) 
   }
   return appReducer(state, action)
 }
 
-// Persist the rootReducer
 const persistedReducer = persistReducer(persistConfig, rootReducer)
 
 const store = configureStore({

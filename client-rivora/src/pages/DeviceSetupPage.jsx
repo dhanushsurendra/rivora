@@ -8,6 +8,8 @@ import 'react-toastify/dist/ReactToastify.css'
 import { jwtDecode } from 'jwt-decode'
 import { useDispatch } from 'react-redux'
 import { setStudioJoinData } from '../redux/studio/studioSlice'
+import { setToken } from '../redux/session/sessionSlice'
+import axiosInstance from '../api/axios'
 
 const DeviceSetupPage = () => {
   const navigate = useNavigate()
@@ -119,12 +121,28 @@ const DeviceSetupPage = () => {
   }
 
   useEffect(() => {
+    if (!token) return
+
     const { sessionId, role } = jwtDecode(token)
     setSessionId(sessionId)
     setRole(role)
 
+    const generateToken = async () => {
+      try {
+        const res = await axiosInstance.post('/session/generate-token', {
+          sessionId,
+          role,
+        })
+
+        dispatch(setToken(res.data.token))
+      } catch (err) {
+        console.error('❌ Failed to generate token:', err)
+      }
+    }
+
     getMediaDevices()
     getAudioDevices()
+    generateToken()
 
     return () => {
       if (stream) {
@@ -189,9 +207,7 @@ const DeviceSetupPage = () => {
     }
   }, [stream])
 
-  useEffect(() => {
-    
-  })
+  useEffect(() => {}, [])
 
   const { token } = useParams()
 
@@ -223,13 +239,8 @@ const DeviceSetupPage = () => {
     // Stop all media tracks and confirm shutdown
     if (stream) {
       stream.getTracks().forEach((track) => {
-        console.log(`🛑 Stopping ${track.kind} track: ${track.label}`)
         track.stop()
         track.enabled = false
-        console.log(
-          `${track.kind} track stopped?`,
-          track.readyState === 'ended'
-        )
       })
     }
 

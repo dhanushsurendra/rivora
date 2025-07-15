@@ -1,24 +1,22 @@
-import React, { useState, useEffect, useRef } from 'react'; // Import React, useState, useEffect, useRef
-import { useSelector, useDispatch } from 'react-redux'; // Import useDispatch
-import { Link, useNavigate } from 'react-router-dom'; // Import useNavigate
-import { logout, removeUserFromLocalStorage } from '../redux/auth/authSlice'; // Ensure these are imported
-import { toast } from 'react-toastify'; // Import toast
+import { useState, useEffect, useRef } from 'react'; 
+import { useSelector, useDispatch } from 'react-redux'; 
+import { Link, useNavigate } from 'react-router-dom'; 
+import { logout, removeUserFromLocalStorage } from '../redux/auth/authSlice';
+import { toast } from 'react-toastify';
 
 
 const Header = () => {
   const user = useSelector((state) => state.auth.user);
-  const isAuthenticated = useSelector((state) => state.auth.isAuthenticated); // Get isAuthenticated state
+  const isAuthenticated = useSelector((state) => state.auth.isAuthenticated); 
   const letter = user?.name?.charAt(0).toUpperCase() || 'X';
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  // State for user profile popover
   const [showProfilePopover, setShowProfilePopover] = useState(false);
-  const profileRef = useRef(null); // Ref for the profile icon button
-  const popoverRef = useRef(null); // Ref for the popover itself
+  const profileRef = useRef(null); 
+  const popoverRef = useRef(null); 
 
-  // Effect to close popover when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (
@@ -39,16 +37,13 @@ const Header = () => {
 
   const handleLogout = async () => {
     try {
-      // In a real application, you might also have an API call here:
-      // await axiosInstance.post('/auth/logout');
-
-      removeUserFromLocalStorage(); // Clear local storage (if used for token)
-      dispatch(logout()); // Dispatch Redux logout action
-      dispatch({ type: 'RESET_STORE' }); // Dispatch action to reset Redux store if needed
+      
+      removeUserFromLocalStorage(); 
+      dispatch(logout()); 
+      dispatch({ type: 'RESET_STORE' }); 
 
       toast.success('Logout successful!', { theme: 'dark' });
 
-      // Close popover after logout
       setShowProfilePopover(false);
 
       setTimeout(() => {
@@ -64,7 +59,7 @@ const Header = () => {
   return (
     <header className='bg-[#111111]'>
       <div className='max-w-7xl mx-auto px-4 py-4 flex items-center justify-between'>
-        {/* Logo */}
+        {}
         <Link
           to='/'
           className='text-2xl font-bold text-[#8A65FD] tracking-tight'
@@ -72,7 +67,7 @@ const Header = () => {
           Rivora
         </Link>
 
-        {/* Navigation - Visible only on md+ */}
+        {}
         <nav className='hidden md:flex space-x-6 text-sm font-medium text-gray-300'>
           <Link to='/#features' className='hover:text-[#8A65FD] transition'>
             Features
@@ -80,13 +75,13 @@ const Header = () => {
           <Link to='/#how-it-works' className='hover:text-[#8A65FD] transition'>
             How it works
           </Link>
-          <Link to='/#pricing' className='hover:text-[#8A65FD] transition'> {/* Changed to #pricing */}
+          <Link to='/#pricing' className='hover:text-[#8A65FD] transition'> {}
             Pricing
           </Link>
         </nav>
 
-        {/* User Profile / Login Button */}
-        <div className='relative'> {/* Added relative positioning for the popover */}
+        {}
+        <div className='relative'> {}
           {isAuthenticated ? (
             <button
               ref={profileRef}
@@ -104,8 +99,8 @@ const Header = () => {
             </Link>
           )}
 
-          {/* Profile Popover */}
-          {showProfilePopover && isAuthenticated && ( // Show popover only if authenticated
+          {}
+          {showProfilePopover && isAuthenticated && ( 
             <div
               ref={popoverRef}
               className='absolute right-0 mt-2 w-72 bg-[#1A1A1A] border border-gray-700 rounded-lg shadow-lg py-2 z-50'

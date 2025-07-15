@@ -31,7 +31,6 @@ const NotFoundPage = () => {
         `}
       </style>
       <div className="text-center max-w-2xl">
-        {/* Custom SVG Image - Designed to look like a simple diagram/illustration from draw.io */}
         <NotFoundIcon />
         <h1 className="text-6xl md:text-7xl font-bold text-[#8A65FD] mb-4">
           404
