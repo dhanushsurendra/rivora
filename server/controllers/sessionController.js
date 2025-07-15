@@ -1,7 +1,7 @@
 require('dotenv').config()
 const nodemailer = require('nodemailer')
-const Session = require('../models/session')
-const User = require('../models/user')
+const Session = require('../models/Session')
+const User = require('../models/User')
 const jwt = require('jsonwebtoken')
 const axios = require('axios')
 
