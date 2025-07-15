@@ -193,31 +193,69 @@ const mergeVideos = async (req, res) => {
 }
 
 const generateToken = async (req, res) => {
-  const { sessionId, role, userName } = req.body;
+  try {
+    const { sessionId, role } = req.body
+    
+    if (!sessionId || !role) {
+      return res.status(400).json({ message: 'Missing sessionId or role' })
+    }
+    
+    const userId = `user_${Date.now()}`
+    
+    // Fetch the session from DB
+    const session = await Session.findById(sessionId)
+    console.log(session)
 
-  if (!sessionId || !role || !userName) {
-    return res.status(400).json({ message: 'Missing required fields.' });
+    if (!session) {
+      return res.status(404).json({ message: 'Session not found' })
+    }
+
+    if (!session.roomId) {
+      return res.status(400).json({ message: 'Session does not have a roomId' })
+    }
+
+    const hmsResponse = await fetch(
+      'https://prod-in.100ms.live/hmsapi/rivora.app.100ms.live/api/token',
+      {
+        method: 'POST',
+        headers: {
+          Authorization: 'Bearer ' + process.env.HMS_MANAGEMENT_TOKEN,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          user_id: userId,
+          role,
+          room_id: session.roomId,
+        }),
+      }
+    )
+
+    if (!hmsResponse.ok) {
+      const errorText = await hmsResponse.text()
+      console.error('HMS API Error:', errorText)
+      return res.status(hmsResponse.status).json({
+        message: 'Failed to generate token from 100ms',
+        details: errorText,
+      })
+    }
+
+    const data = await hmsResponse.json()
+
+    if (!data.token) {
+      return res.status(500).json({ message: 'Token not received from 100ms' })
+    }
+
+    return res.status(200).json({ token: data.token })
+
+  } catch (error) {
+    console.error('Internal server error in generateToken:', error)
+    return res.status(500).json({
+      message: 'Internal server error',
+      error: error.message,
+    })
   }
-
-  // Call 100ms API to generate token
-  // const response = await fetch('https://prod-in.100ms.live/hmsapi/your-subdomain.app.100ms.live/api/token', {
-  //   method: 'POST',
-  //   headers: {
-  //     'Authorization': 'Bearer ' + YOUR_MANAGEMENT_TOKEN,
-  //     'Content-Type': 'application/json',
-  //   },
-  //   body: JSON.stringify({
-  //     user_id: userName,
-  //     role,
-  //     room_id: ,
-  //   }),
-  // });
-
-  const data = await response.json();
-
-  // Optional: you can also sign your own token (JWT) that includes role/sessionId if needed
-  res.status(200).json({ token: data.token });
 }
+
 
 async function create100msRoom(title) {
   try {
@@ -252,12 +290,13 @@ const createSession = async (req, res) => {
   }
 
   try {
-    // const roomId = await create100msRoom(title)
+    const roomId = await create100msRoom(title)
 
     const session = new Session({
       title,
       host,
       scheduledAt: new Date(scheduledAt),
+      roomId,
     })
 
     await session.save()
@@ -344,4 +383,5 @@ module.exports = {
   getMySessions,
   getSessionById,
   mergeVideos,
+  generateToken
 }

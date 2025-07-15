@@ -5,7 +5,7 @@ const trackSchema = new mongoose.Schema({
   user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   type: { type: String, enum: ['audio', 'video'], required: true },
   url: { type: String, required: true },
-  duration: Number, // in seconds
+  duration: Number, 
   createdAt: { type: Date, default: Date.now },
 });
 

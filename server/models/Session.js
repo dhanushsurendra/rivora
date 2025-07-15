@@ -14,7 +14,7 @@ const sessionSchema = new mongoose.Schema({
   scheduledAt: { type: Date, required: true },
   isLive: { type: Boolean, default: false },
 
-  roomId: { type: String, required: true }, // ← added this line for 100ms room ID
+  roomId: { type: String, required: true }, 
 
   mergedVideo: {
     host: { type: String },
